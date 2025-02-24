@@ -14,8 +14,7 @@
   "dependencies": {
     "@mapbox/node-pre-gyp": "^2.0.0",
     "aws-sdk": "^2.1692.0",
-    "bcrypt": "^5.1.1",
-    "bcryptjs": "^3.0.2",
+    "bcryptjs": "^3.0.1",
     "cloudinary": "^2.5.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
