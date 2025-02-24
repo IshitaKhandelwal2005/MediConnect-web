@@ -14,7 +14,11 @@ const port=process.env.PORT || 4000
 connectDB()
 connectCloudinary()
 app.use(express.json())
-app.use(cors()) // frontend //different domains can access api
+app.use(cors({
+    origin: '*', // Allows all origins
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true, // If using cookies, sessions, or authentication, set this to false if not needed
+})); // frontend //different domains can access api
 
 
 app.use('/api/admin',adminRouter)
