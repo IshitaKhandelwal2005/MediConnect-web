@@ -4,11 +4,11 @@ const Header =()=> {
   return (
     <div className='flex flex-row flex-wrap bg-[#1D2129] rounded-lg px-6 md:px-10 lg:px-20'>
       <div className='flex flex-col items-center md:items-start md:w-1/2 justify-center gap-6 md:gap-4 py-10 m-auto text-white md:py-[10vw] md:mb-[-30px]'>
-        <p className='text-center sm:text-left text-2xl md:text-3xl lg:text-4xl font-semibold leading-tight'>
+        <p className='text-center sm:text-left text-xl md:text-2xl lg:text-3xl font-semibold leading-tight'>
           Book Appointments <br /> With Trusted Doctors
         </p>
         <div className='flex flex-col md:flex-row font-light items-center gap-3 text-sm'>
-          <img className='w-28' src={assets.group_profiles} alt="" />
+          <img className='w-20' src={assets.group_profiles} alt="" />
           <p className='text-center md:text-start'>
             Simply browse through our extensive list of trusted doctors, <br className='hidden md:block'/>schedule your appointment hassle-free.
           </p>
@@ -18,7 +18,7 @@ const Header =()=> {
         </a>
       </div>
       <div className='md:w-1/2 relative'>
-        <img className='w-full md:absolute bottom-0 h-auto rounded-lg' src={assets.header_img} alt="" />
+        <img className='w-full md:absolute bottom-0 h-auto max-h-[400px] object-contain rounded-lg' src={assets.header_img} alt="" />
       </div>
     </div>
   )

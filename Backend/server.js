@@ -17,7 +17,6 @@ app.use(express.json())
 app.use(cors({
     origin: '*', // Allows all origins
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true, // If using cookies, sessions, or authentication, set this to false if not needed
 })); // frontend //different domains can access api
 
 
