@@ -84,6 +84,11 @@ const Appointments =()=> {
       return navigate('/login')
     }
 
+    if(!slotTime){
+      toast.warn('Please select a time slot')
+      return
+    }
+
     try{
       const date=docSlots[slotIndex][0].datetime
 
@@ -103,7 +108,7 @@ const Appointments =()=> {
       {
         toast.error(data.message)
       }
-      
+
     }
     catch(error)
     {

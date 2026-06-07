@@ -7,6 +7,7 @@ import adminRouter from './routes/adminRoute.js'
 import multer from 'multer'
 import doctorRouter from './routes/doctorRoute.js'
 import userRouter from './routes/userRoute.js'
+import paymentRouter from './routes/paymentRoute.js'
 
 const app=express() // routes,middleware
 const port=process.env.PORT || 4000
@@ -23,6 +24,7 @@ app.use(cors({
 app.use('/api/admin',adminRouter)
 app.use('/api/doctor',doctorRouter)
 app.use('/api/user',userRouter)
+app.use('/api/payment',paymentRouter)
 
 
 app.get('/',(req,res)=>{

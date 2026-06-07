@@ -129,6 +129,11 @@ const bookAppointment=async(req,res)=>{
 
     try{
         const {userId,docId,slotDate,slotTime}=req.body
+
+        if(!slotTime || slotTime === ''){
+            return res.json({success:false,message:"slotTime is required"})
+        }
+
         const docData=await doctorModel.findById(docId).select('-password')
 
         if(!docData.available)

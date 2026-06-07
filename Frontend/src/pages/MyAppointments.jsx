@@ -1,13 +1,15 @@
-import React, { useContext, useEffect,useState } from 'react'
-import {AppContext} from '../context/AppContext'
+import React, { useContext, useEffect, useState } from 'react'
+import { AppContext } from '../context/AppContext'
 import axios from 'axios'
 import { toast } from 'react-toastify'
-import appointmentModel from '../../../Backend/models/appointmentModel'
+import StripePayment from '../components/StripePayment'
 const MyAppointments =()=> {
 
 
   const {backendUrl,token}=useContext(AppContext)
   const [appointments,setAppointments] =useState([])
+  const [showPayment, setShowPayment] = useState(false)
+  const [selectedAppointment, setSelectedAppointment] = useState(null)
   const months= ["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
 
@@ -43,13 +45,28 @@ const MyAppointments =()=> {
       {
         toast.error(data.message)
       }
-    
+
     }
     catch(error)
     {
       console.log(error)
       toast.error(error.message)
     }
+  }
+
+  const handlePayment = (appointment) => {
+    setSelectedAppointment(appointment)
+    setShowPayment(true)
+  }
+
+  const handlePaymentSuccess = () => {
+    setShowPayment(false)
+    getUserAppointments()
+  }
+
+  const handlePaymentCancel = () => {
+    setShowPayment(false)
+    setSelectedAppointment(null)
   }
 
   
@@ -80,15 +97,28 @@ const MyAppointments =()=> {
               </div>
               <div></div>
               <div className='flex flex-col gap-2 justify-end'>
-                  {!item.cancelled && !item.isCompleted && <button onClick={()=>appointmentRazorpay(item._id)} className='text-sm text-stone-500 text-center sm:min-w-48 py-2 border rounded hover:bg-[#1D2129] hover:text-white transition-all duration-300'>Pay Online</button>}
+                  {!item.cancelled && !item.isCompleted && !item.payment && <button onClick={()=>handlePayment(item)} className='text-sm text-stone-500 text-center sm:min-w-48 py-2 border rounded hover:bg-[#1D2129] hover:text-white transition-all duration-300'>Pay Online</button>}
                   {!item.cancelled && !item.isCompleted && <button onClick={()=>cancelAppointment(item._id)} className='text-sm text-stone-500 text-center sm:min-w-48 py-2 border rounded hover:bg-[#1D2129] hover:text-white transition-all duration-300'>Cancel Appointment</button>}
                   {item.cancelled && !item.isCompleted && <button className='sm:min-w-48 py-2 border border-red-500 rounded text-red-500'>Appointment cancelled</button>}
                   {item.isCompleted && <button className='sm:min-w-48 py-2 border border-green-500 rounded text-green-500'>Completed</button>}
+                  {item.payment && !item.cancelled && !item.isCompleted && <button className='sm:min-w-48 py-2 border border-green-500 rounded text-green-500'>Paid</button>}
               </div>
             </div>
           ))
         }
       </div>
+
+      {showPayment && selectedAppointment && (
+        <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
+          <StripePayment
+            appointmentId={selectedAppointment._id}
+            amount={selectedAppointment.amount}
+            doctorName={selectedAppointment.docData.name}
+            onSuccess={handlePaymentSuccess}
+            onCancel={handlePaymentCancel}
+          />
+        </div>
+      )}
     </div>
   )
 }

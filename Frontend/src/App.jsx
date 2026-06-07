@@ -24,6 +24,8 @@ import DoctorsList from './pages/Admin/DoctorsList'
 import DoctorDashboard from './pages/Doctors/DoctorDashboard'
 import DoctorAppointments from './pages/Doctors/DoctorAppointments'
 import DoctorProfile from './pages/Doctors/DoctorProfile'
+import PaymentSuccess from './pages/PaymentSuccess'
+import PaymentCancel from './pages/PaymentCancel'
 
 function App() {
   const {atoken, dtoken} = useContext(AppContext)
@@ -64,6 +66,8 @@ function App() {
               <Route path='/my-profile' element={<MyProfile/>}></Route>
               <Route path='/my-appointments' element={<MyAppointments/>}></Route>
               <Route path='/appointments/:docId' element={<Appointments/>}></Route>
+              <Route path='/payment-success' element={<PaymentSuccess/>}></Route>
+              <Route path='/payment-cancel' element={<PaymentCancel/>}></Route>
             </Routes>
           </div>
           <Footer/>
