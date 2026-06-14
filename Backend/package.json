@@ -12,6 +12,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@mapbox/node-pre-gyp": "^2.0.0",
     "aws-sdk": "^2.1692.0",
     "bcryptjs": "^3.0.1",
