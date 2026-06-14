@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
+import { AppContext } from '../context/AppContext';
 
 const StripePayment = ({ appointmentId, amount, doctorName, onSuccess, onCancel }) => {
+    const { currencySymbol } = useContext(AppContext);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -48,7 +50,7 @@ const StripePayment = ({ appointmentId, amount, doctorName, onSuccess, onCancel 
                 </div>
                 <div className='flex justify-between text-gray-600'>
                     <span>Amount:</span>
-                    <span className='font-medium text-lg'>${amount}</span>
+                    <span className='font-medium text-lg'>{currencySymbol}{amount}</span>
                 </div>
             </div>
 

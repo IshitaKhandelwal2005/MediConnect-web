@@ -19,7 +19,7 @@ const createStripeCheckout = async (req, res) => {
             payment_method_types: ['card'],
             line_items: [{
                 price_data: {
-                    currency: 'usd',
+                    currency: (process.env.CURRENCY || 'inr').toLowerCase(),
                     product_data: {
                         name: `Appointment with Dr. ${appointmentData.docData.name}`,
                         description: `Date: ${appointmentData.slotDate} at ${appointmentData.slotTime}`,

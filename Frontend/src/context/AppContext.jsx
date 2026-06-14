@@ -6,7 +6,7 @@ import {toast} from 'react-toastify'
 export const AppContext=createContext()
 const AppContextProvider = (props)=>{
     
-    const currencySymbol='$'
+    const currencySymbol='₹'
     const backendUrl=import.meta.env.VITE_BACKEND_URL 
     const [doctors,setDoctors]=useState([])
     const [token,setToken]=useState(localStorage.getItem('token')?localStorage.getItem('token'):'')
@@ -266,8 +266,17 @@ const AppContextProvider = (props)=>{
         profileData,setProfileData,getProfile,doctorAppointments,setDoctorAppointments,getDoctorAppointments,completeAppointment,cancelDoctorAppointment,doctorDashData,getDoctorDashData,
         // Utility functions
         slotDateFormat: (dateString) => {
-            const date = new Date(dateString)
-            return date.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })
+            if (!dateString) return '';
+            const dateArray = dateString.split('_');
+            if (dateArray.length === 3) {
+                const day = Number(dateArray[0]);
+                const month = Number(dateArray[1]) - 1; // Months are 0-indexed in JS Date
+                const year = Number(dateArray[2]);
+                const date = new Date(year, month, day);
+                return date.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+            }
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
         },
         calculateAge: (dob) => {
             const today = new Date()
