@@ -19,10 +19,6 @@ function Sidebar() {
             <img src={assets.appointment_icon} alt="" className='w-5 h-5' />
             <p className='font-medium'>Appointments</p>
           </NavLink>
-          <NavLink to={'/add-doctor'} className={({isActive})=> `flex items-center gap-3 py-3 px-4 rounded-lg cursor-pointer transition-all ${isActive?'bg-[#002000] text-white':'hover:bg-gray-100'}`}>
-            <img src={assets.add_icon} alt="" className='w-5 h-5' />
-            <p className='font-medium'>Add Doctor</p>
-          </NavLink>
           <NavLink to={'doctor-list'} className={({isActive})=> `flex items-center gap-3 py-3 px-4 rounded-lg cursor-pointer transition-all ${isActive?'bg-[#002000] text-white':'hover:bg-gray-100'}`}>
             <img src={assets.people_icon} alt="" className='w-5 h-5' />
             <p className='font-medium'>Doctors List</p>

@@ -2,7 +2,8 @@
 /Backend/node_modules
 /Frontend/node_modules
 /admin/node_modules
-
+/Frontend/src/assets
+/Frontend/dist
 .env
 Frontend/.env
 Backend/.env

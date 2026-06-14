@@ -104,6 +104,25 @@ const AppContextProvider = (props)=>{
         }
     }
 
+    const approveDoctor =async(docId)=>{
+        try{
+            const {data}=await axios.post(backendUrl +'/api/admin/approve-doctor',{docId},{headers:{atoken}})
+            if(data.success)
+            {
+                toast.success(data.message)
+                getAllDoctors()
+            }
+            else
+            {
+                toast.error(data.message)
+            }
+        }
+        catch(error)
+        {
+            toast.error(error.message)
+        }
+    }
+
     const getAllAppointments =async()=>{
         try{
             const {data}=await axios.get(backendUrl+'/api/admin/appointments',{headers:{atoken}})
@@ -261,7 +280,7 @@ const AppContextProvider = (props)=>{
     const value ={
         doctors,currencySymbol,token,setToken,atoken,setAToken,dtoken,setDToken,backendUrl,userData,setUserData,loadUserProfileData,getDoctorsData,
         // Admin functions
-        adminDoctors,getAllDoctors,changeAvailability,getAllAppointments,appointments,cancelAppointment,getDashData,dashData,
+        adminDoctors,getAllDoctors,changeAvailability,approveDoctor,getAllAppointments,appointments,cancelAppointment,getDashData,dashData,
         // Doctor functions
         profileData,setProfileData,getProfile,doctorAppointments,setDoctorAppointments,getDoctorAppointments,completeAppointment,cancelDoctorAppointment,doctorDashData,getDoctorDashData,
         // Utility functions

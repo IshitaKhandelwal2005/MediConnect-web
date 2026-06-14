@@ -138,8 +138,15 @@ const Login=()=> {
         <button type='submit' className='bg-[#1D2129] text-white w-full py-2 rounded-md text-base' >{state === 'Sign Up' ? "Create Account" : "Login"}</button>
         {
           state === "Sign Up"?
-          <p>Already have an account? <span onClick={()=>setState("Login")} className='text-gray-800 underline cursor-pointer'>Login Here</span></p>
-          : <p>Create an new account? <span onClick={()=>setState("Sign Up")} className='text-gray-800 underline cursor-pointer'>Click here</span> </p>
+          <div className='flex flex-col gap-1 mt-1 w-full'>
+            <p>Already have an account? <span onClick={()=>setState("Login")} className='text-gray-800 underline cursor-pointer font-semibold'>Login Here</span></p>
+            <p className='mt-2 text-zinc-500'>Are you a doctor? <span onClick={()=>navigate('/doctor-register')} className='text-neutral-800 underline cursor-pointer font-semibold'>Register as doctor here</span></p>
+          </div>
+          : 
+          <div className='flex flex-col gap-1 mt-1 w-full'>
+            <p>Create an new account? <span onClick={()=>setState("Sign Up")} className='text-gray-800 underline cursor-pointer font-semibold'>Click here</span> </p>
+            <p className='mt-2 text-zinc-500'>Are you a doctor? <span onClick={()=>navigate('/doctor-register')} className='text-neutral-800 underline cursor-pointer font-semibold'>Register as doctor here</span></p>
+          </div>
         }
       </div>
     </form>
