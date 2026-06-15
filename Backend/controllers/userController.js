@@ -11,8 +11,8 @@ import Razorpay from 'razorpay'
 const registerUser =async(req,res)=>{
 
     try{
-        const {name,email,password}=req.body
-        if(!name || !password || !email)
+        const {name,email,password,phone,gender,address}=req.body
+        if(!name || !password || !email || !phone || !gender)
         {
             return res.json({success:false,message:"missing details"})
         }
@@ -27,11 +27,36 @@ const registerUser =async(req,res)=>{
             return res.json({success:false,message:"enter a strong password"})
         }
 
+        if (!phone.trim()) {
+            return res.json({success:false,message:"please enter a valid phone number"})
+        }
+
+        if (!gender || gender === 'Not Selected' || !gender.trim()) {
+            return res.json({success:false,message:"please select your gender"})
+        }
+
+        // Validate/parse optional address
+        let addressObj = { line1: '', line2: '' }
+        if (address) {
+            if (typeof address === 'string') {
+                try {
+                    addressObj = JSON.parse(address)
+                } catch (e) {
+                    addressObj = { line1: address, line2: '' }
+                }
+            } else if (typeof address === 'object') {
+                addressObj = {
+                    line1: address.line1 || '',
+                    line2: address.line2 || ''
+                }
+            }
+        }
+
         const salt=await bcrypt.genSalt(10)
         const hashedPassword =await bcrypt.hash(password,salt)
 
         const userData={
-            name,email,password:hashedPassword
+            name,email,password:hashedPassword,phone,gender,address:addressObj
         }
 
         const newUser =new userModel(userData)
