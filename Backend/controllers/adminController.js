@@ -37,6 +37,7 @@ const allDoctors = async (req, res) => {
 const appointmentsAdmin = async (req, res) => {
 
     try {
+        await appointmentModel.autoCompleteAppointments()
         const appointments = await appointmentModel.find({})
         res.json({ success: true, appointments })
     }
@@ -73,6 +74,7 @@ const appointmentCancel = async (req, res) => {
 
 const adminDashboard = async (req, res) => {
     try {
+        await appointmentModel.autoCompleteAppointments()
         const doctors = await doctorModel.find({})
         const users = await userModel.find({})
         const appointments = await appointmentModel.find({})

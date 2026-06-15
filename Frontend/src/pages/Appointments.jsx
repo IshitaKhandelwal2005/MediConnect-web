@@ -76,21 +76,22 @@ const Appointments = () => {
       return; // Exit function early if docInfo is null or slots_booked is undefined
     }
 
-    setDocSlots([])
-
     let today = new Date()
-    for (let i = 0; i < 7; i++) {
+    let slotsCount = 0
+    let dayOffset = 0
+    let allSlots = []
+
+    while (slotsCount < 7 && dayOffset < 14) {
       let currentDate = new Date(today)
-      currentDate.setDate(today.getDate() + i)
+      currentDate.setDate(today.getDate() + dayOffset)
 
       let endtime = new Date()
-      endtime.setDate(today.getDate() + i)
+      endtime.setDate(today.getDate() + dayOffset)
       endtime.setHours(21, 0, 0, 0)
 
       if (today.getDate() === currentDate.getDate()) {
         currentDate.setHours(currentDate.getHours() > 10 ? currentDate.getHours() + 1 : 10)
         currentDate.setMinutes(currentDate.getMinutes() > 30 ? 30 : 0)
-
       }
       else {
         currentDate.setHours(10)
@@ -117,12 +118,16 @@ const Appointments = () => {
           })
         }
 
-
         currentDate.setMinutes(currentDate.getMinutes() + 30)
       }
-      setDocSlots(prev => ([...prev, timeSlots]))
 
+      if (timeSlots.length > 0) {
+        allSlots.push(timeSlots)
+        slotsCount++
+      }
+      dayOffset++
     }
+    setDocSlots(allSlots)
   }
 
   const bookAppointment = async () => {

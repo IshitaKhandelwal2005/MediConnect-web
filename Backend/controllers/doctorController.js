@@ -65,6 +65,7 @@ const loginDoctor =async(req,res)=>{
 const appointmentsDoctor =async(req,res)=>{
     try{
         const {docId}=req.body
+        await appointmentModel.autoCompleteAppointments()
         const appointments=await appointmentModel.find({docId})
 
         res.json({success:true,appointments})
@@ -122,6 +123,7 @@ const appointmentCancel =async(req,res)=>{
 const doctorDashboard =async(req,res)=>{
     try{
         const {docId}=req.body
+        await appointmentModel.autoCompleteAppointments()
         const appointments=await appointmentModel.find({docId})
         let earnings=0
 

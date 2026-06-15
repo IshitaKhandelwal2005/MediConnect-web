@@ -182,6 +182,7 @@ const bookAppointment=async(req,res)=>{
 const listAppointment=async (req,res)=>{
     try{
         const {userId}=req.body
+        await appointmentModel.autoCompleteAppointments()
         const appointments =await appointmentModel.find({userId})
         res.json({success:true,appointments})
     }
