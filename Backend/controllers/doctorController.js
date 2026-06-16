@@ -173,9 +173,17 @@ const doctorProfile =async(req,res)=>{
 const updateDoctorProfile =async(req,res)=>{
     try{
         const {docId,fees,address,available}=req.body;
-        await doctorModel.findByIdAndUpdate(docId,{fees,address,available})
 
-        res.json({success:true,messsage:'Profile Updated'})
+        if (!fees || Number(fees) <= 0) {
+            return res.json({ success: false, message: "Consultation fees must be a positive number" })
+        }
+        if (!address || !address.line1 || !address.line2 || !address.line1.trim() || !address.line2.trim()) {
+            return res.json({ success: false, message: "Clinic address is required (both line 1 and line 2)" })
+        }
+
+        await doctorModel.findByIdAndUpdate(docId,{fees: Number(fees),address,available})
+
+        res.json({success:true,message:'Profile Updated'})
     }
     catch(error)
     {

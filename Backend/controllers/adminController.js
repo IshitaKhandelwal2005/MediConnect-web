@@ -75,7 +75,7 @@ const appointmentCancel = async (req, res) => {
 const adminDashboard = async (req, res) => {
     try {
         await appointmentModel.autoCompleteAppointments()
-        const doctors = await doctorModel.find({})
+        const doctors = await doctorModel.find({ isApproved: true })
         const users = await userModel.find({})
         const appointments = await appointmentModel.find({})
 

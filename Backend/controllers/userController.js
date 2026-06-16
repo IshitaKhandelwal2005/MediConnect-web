@@ -128,12 +128,30 @@ const updateProfile =async(req,res)=>{
         const {userId,name,phone,address,dob,gender}=req.body
         const imageFile =req.file
 
-        if(!name || !phone || !dob || !gender)
+        if(!name || !phone || !gender)
         {
             return res.json({success:false,message:"data missing"})
-
         }
-        await userModel.findByIdAndUpdate(userId,{name,phone,address:JSON.parse(address),dob,gender})
+
+        if (!phone.trim()) {
+            return res.json({success:false,message:"please enter a valid phone number"})
+        }
+
+        if (gender === 'Not Selected' || !gender.trim()) {
+            return res.json({success:false,message:"please select your gender"})
+        }
+
+        // Safely parse optional address
+        let addressObj = { line1: '', line2: '' }
+        if (address) {
+            try {
+                addressObj = JSON.parse(address)
+            } catch (e) {
+                // Ignore parse errors, keep default empty strings
+            }
+        }
+
+        await userModel.findByIdAndUpdate(userId,{name,phone,address:addressObj,dob,gender})
         
         if(imageFile)
         {

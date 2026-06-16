@@ -13,6 +13,16 @@ const MyProfile=()=> {
 
   const updateUserProfileData =async ()=>{
     try{
+      if (!userData.name.trim()) {
+        return toast.error('Name is required')
+      }
+      if (!userData.phone.trim()) {
+        return toast.error('Phone number is required')
+      }
+      if (userData.gender === 'Not Selected' || !userData.gender) {
+        return toast.error('Please select your gender')
+      }
+
       const formData=new FormData()
 
       formData.append('name',userData.name)

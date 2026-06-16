@@ -9,6 +9,13 @@ export const DoctorProfile = () => {
 
   const updateProfile =async()=>{
     try{
+      if (!profileData.fees || Number(profileData.fees) <= 0) {
+        return toast.error('Consultation fees must be a positive number')
+      }
+      if (!profileData.address?.line1?.trim() || !profileData.address?.line2?.trim()) {
+        return toast.error('Clinic address is required (both line 1 and line 2)')
+      }
+
       const updateData ={
         address :profileData.address,
         fees:profileData.fees,
