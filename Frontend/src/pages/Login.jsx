@@ -349,11 +349,11 @@ const Login = () => {
               </div>
 
               <div>
-                <label className='block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1'>Address Line 2 (Optional)</label>
+                <label className='block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1'>City & State (Optional)</label>
                 <input
                   className='border border-zinc-300 rounded-lg w-full p-3 bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-neutral-800 focus:bg-white focus:border-transparent transition-all'
                   type='text'
-                  placeholder='Area, City'
+                  placeholder='City, State'
                   onChange={(e) => setAddress2(e.target.value)}
                   value={address2}
                 />

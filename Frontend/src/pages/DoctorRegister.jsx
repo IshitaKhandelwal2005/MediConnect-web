@@ -285,7 +285,7 @@ function DoctorRegister() {
                   value={address2} 
                   className='border border-zinc-300 rounded-lg px-3 py-3 w-full bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-neutral-800 focus:bg-white focus:border-transparent transition-all' 
                   type='text' 
-                  placeholder='Address Line 2 (Area, City)' 
+                  placeholder='City & State' 
                   required 
                 />
               </div>
