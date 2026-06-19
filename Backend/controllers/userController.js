@@ -6,7 +6,45 @@ import {v2 as cloudinary} from 'cloudinary'
 import doctorModel from '../models/doctorModel.js'
 import appointmentModel from '../models/appointmentModel.js'
 import Razorpay from 'razorpay'
-//api to regsiter user
+import otpModel from '../models/otpModel.js'
+import { sendOtpEmail } from '../utils/emailService.js'
+
+// Send OTP for user registration
+const sendOtp = async (req, res) => {
+    try {
+        const { email } = req.body
+        if (!email || !validator.isEmail(email)) {
+            return res.json({ success: false, message: 'Please provide a valid email address' })
+        }
+
+        // Check if email is already registered
+        const existingUser = await userModel.findOne({ email })
+        if (existingUser) {
+            return res.json({ success: false, message: 'This email is already registered. Please log in.' })
+        }
+
+        // Generate 6-digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString()
+
+        // Upsert OTP (replace any existing OTP for this email)
+        await otpModel.findOneAndUpdate(
+            { email },
+            { otp, createdAt: new Date() },
+            { upsert: true, new: true }
+        )
+
+        // Send email
+        const name = req.body.name || 'User'
+        await sendOtpEmail(email, otp, name)
+
+        res.json({ success: true, message: 'OTP sent to your email' })
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false, message: error.message })
+    }
+}
+
+//api to register user
 
 const registerUser =async(req,res)=>{
 
@@ -52,6 +90,21 @@ const registerUser =async(req,res)=>{
             }
         }
 
+        // Verify OTP
+        const { otp } = req.body
+        if (!otp) {
+            return res.json({ success: false, message: 'OTP is required' })
+        }
+        const otpRecord = await otpModel.findOne({ email })
+        if (!otpRecord) {
+            return res.json({ success: false, message: 'OTP expired or not found. Please request a new one.' })
+        }
+        if (otpRecord.otp !== otp.toString()) {
+            return res.json({ success: false, message: 'Invalid OTP. Please check and try again.' })
+        }
+        // Delete OTP after successful verification
+        await otpModel.deleteOne({ email })
+
         const salt=await bcrypt.genSalt(10)
         const hashedPassword =await bcrypt.hash(password,salt)
 
@@ -63,7 +116,6 @@ const registerUser =async(req,res)=>{
         const user=await newUser.save()
 
         const token=jwt.sign({id:user._id},process.env.JWT_SECRET)
-
 
         res.json({success:true,token})
     }
@@ -301,5 +353,5 @@ const paymentRazorpay =async(req,res)=>{
 }
 
 
-export {registerUser,loginUser,paymentRazorpay,getProfile,updateProfile,bookAppointment,listAppointment,cancelAppointment}
+export {registerUser,sendOtp,loginUser,paymentRazorpay,getProfile,updateProfile,bookAppointment,listAppointment,cancelAppointment}
 

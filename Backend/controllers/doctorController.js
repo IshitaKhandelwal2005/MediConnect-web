@@ -4,6 +4,42 @@ import jwt from 'jsonwebtoken'
 import appointmentModel from '../models/appointmentModel.js'
 import validator from 'validator'
 import {v2 as cloudinary} from 'cloudinary'
+import otpModel from '../models/otpModel.js'
+import { sendOtpEmail } from '../utils/emailService.js'
+
+// Send OTP for doctor registration
+const sendDoctorOtp = async (req, res) => {
+    try {
+        const { email } = req.body
+        if (!email || !validator.isEmail(email)) {
+            return res.json({ success: false, message: 'Please provide a valid email address' })
+        }
+
+        // Check if doctor email is already registered
+        const existingDoctor = await doctorModel.findOne({ email })
+        if (existingDoctor) {
+            return res.json({ success: false, message: 'This email is already registered. Please log in.' })
+        }
+
+        // Generate 6-digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString()
+
+        // Upsert OTP
+        await otpModel.findOneAndUpdate(
+            { email },
+            { otp, createdAt: new Date() },
+            { upsert: true, new: true }
+        )
+
+        const name = req.body.name || 'Doctor'
+        await sendOtpEmail(email, otp, name)
+
+        res.json({ success: true, message: 'OTP sent to your email' })
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false, message: error.message })
+    }
+}
 const changeAvailability=async(req,res)=>{
     try{
         const {docId}=req.body
@@ -246,6 +282,20 @@ const registerDoctor = async (req, res) => {
             return res.json({ success: false, message: "Doctor already registered with this email" });
         }
 
+        // Verify OTP before processing files
+        const { otp } = req.body
+        if (!otp) {
+            return res.json({ success: false, message: 'OTP is required' })
+        }
+        const otpRecord = await otpModel.findOne({ email })
+        if (!otpRecord) {
+            return res.json({ success: false, message: 'OTP expired or not found. Please request a new one.' })
+        }
+        if (otpRecord.otp !== otp.toString()) {
+            return res.json({ success: false, message: 'Invalid OTP. Please check and try again.' })
+        }
+        await otpModel.deleteOne({ email })
+
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -281,4 +331,4 @@ const registerDoctor = async (req, res) => {
     }
 }
 
-export {changeAvailability,updateDoctorProfile,doctorProfile,doctorDashboard,doctorList,loginDoctor,appointmentsDoctor,appointmentCancel,appointmentComplete,registerDoctor}
+export {changeAvailability,updateDoctorProfile,doctorProfile,doctorDashboard,doctorList,loginDoctor,appointmentsDoctor,appointmentCancel,appointmentComplete,registerDoctor,sendDoctorOtp}

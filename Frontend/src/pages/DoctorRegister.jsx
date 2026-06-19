@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useState, useEffect } from 'react'
 import { assets } from '../assets/assets'
 import { AppContext } from '../context/AppContext'
 import { toast } from 'react-toastify'
@@ -23,6 +23,10 @@ function DoctorRegister() {
   const [address1, setAddress1] = useState('')
   const [address2, setAddress2] = useState('')
   const [loading, setLoading] = useState(false)
+  // OTP states
+  const [otp, setOtp] = useState(['', '', '', '', '', ''])
+  const [otpSending, setOtpSending] = useState(false)
+  const [resendTimer, setResendTimer] = useState(0)
 
   const { backendUrl } = useContext(AppContext)
   const navigate = useNavigate()
@@ -59,9 +63,74 @@ function DoctorRegister() {
     return true
   }
 
-  const nextStep = () => {
-    if (validateStep()) {
-      setStep((prev) => prev + 1)
+  const nextStep = async () => {
+    if (!validateStep()) return
+    // Step 3 → Step 4: send OTP
+    if (step === 3) {
+      if (!address1.trim() || !address2.trim()) { toast.error('Clinic address is required'); return }
+      if (!docImg) { toast.error('Profile photo is required'); return }
+      if (!docFile) { toast.error('Verification document is required'); return }
+      if (!about.trim()) { toast.error('Please write details about yourself'); return }
+      setOtpSending(true)
+      try {
+        const { data } = await axios.post(backendUrl + '/api/doctor/send-otp', { email, name })
+        if (data.success) {
+          toast.success('OTP sent to ' + email)
+          setStep(4)
+          setOtp(['', '', '', '', '', ''])
+          setResendTimer(60)
+        } else {
+          toast.error(data.message)
+        }
+      } catch (err) {
+        toast.error(err.message)
+      } finally {
+        setOtpSending(false)
+      }
+      return
+    }
+    setStep((prev) => prev + 1)
+  }
+
+  // Resend timer countdown
+  useEffect(() => {
+    if (resendTimer <= 0) return
+    const interval = setInterval(() => setResendTimer(t => t - 1), 1000)
+    return () => clearInterval(interval)
+  }, [resendTimer])
+
+  const handleResendOtp = async () => {
+    if (resendTimer > 0) return
+    setOtpSending(true)
+    try {
+      const { data } = await axios.post(backendUrl + '/api/doctor/send-otp', { email, name })
+      if (data.success) {
+        toast.success('OTP resent to ' + email)
+        setOtp(['', '', '', '', '', ''])
+        setResendTimer(60)
+      } else {
+        toast.error(data.message)
+      }
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setOtpSending(false)
+    }
+  }
+
+  const handleOtpChange = (value, index) => {
+    if (!/^\d*$/.test(value)) return
+    const newOtp = [...otp]
+    newOtp[index] = value.slice(-1)
+    setOtp(newOtp)
+    if (value && index < 5) {
+      document.getElementById(`doc-otp-${index + 1}`)?.focus()
+    }
+  }
+
+  const handleOtpKeyDown = (e, index) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      document.getElementById(`doc-otp-${index - 1}`)?.focus()
     }
   }
 
@@ -71,17 +140,9 @@ function DoctorRegister() {
 
   const onSubmitHandler = async (event) => {
     event.preventDefault()
-    if (!address1.trim() || !address2.trim()) {
-      return toast.error('Clinic address is required')
-    }
-    if (!docImg) {
-      return toast.error('Profile photo is required')
-    }
-    if (!docFile) {
-      return toast.error('Verification document is required')
-    }
-    if (!about.trim()) {
-      return toast.error('Please write details about yourself')
+    const otpString = otp.join('')
+    if (otpString.length !== 6) {
+      return toast.error('Please enter the complete 6-digit OTP')
     }
 
     setLoading(true)
@@ -98,6 +159,7 @@ function DoctorRegister() {
       formData.append('speciality', speciality)
       formData.append('degree', degree)
       formData.append('address', JSON.stringify({ line1: address1, line2: address2 }))
+      formData.append('otp', otpString)
 
       const { data } = await axios.post(backendUrl + '/api/doctor/register', formData)
 
@@ -146,18 +208,19 @@ function DoctorRegister() {
         <div className='mb-8'>
           <div className='flex justify-between items-center mb-2'>
             <span className='text-xs font-semibold text-zinc-400 uppercase tracking-wider'>
-              Step {step} of 3
+              Step {step} of 4
             </span>
             <span className='text-xs font-bold text-neutral-800'>
               {step === 1 && 'Account Credentials'}
               {step === 2 && 'Professional Information'}
               {step === 3 && 'Bio & Verification'}
+              {step === 4 && 'Verify Email'}
             </span>
           </div>
           <div className='w-full bg-zinc-100 h-2 rounded-full overflow-hidden border border-zinc-200/50'>
             <div 
               className='bg-[#1D2129] h-full transition-all duration-300 ease-out' 
-              style={{ width: `${(step / 3) * 100}%` }}
+              style={{ width: `${(step / 4) * 100}%` }}
             />
           </div>
         </div>
@@ -326,6 +389,55 @@ function DoctorRegister() {
             </div>
           )}
 
+          {/* Step 4: OTP Verification */}
+          {step === 4 && (
+            <div className='space-y-5 animate-fadeIn'>
+              <div className='text-center'>
+                <div className='w-12 h-12 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-3'>
+                  <svg className='w-6 h-6 text-neutral-700' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' />
+                  </svg>
+                </div>
+                <p className='text-sm text-zinc-500 leading-relaxed'>
+                  We sent a 6-digit code to<br />
+                  <span className='font-semibold text-neutral-800'>{email}</span>
+                </p>
+              </div>
+
+              {/* 6-box OTP Input */}
+              <div className='flex gap-2 justify-center'>
+                {otp.map((digit, idx) => (
+                  <input
+                    key={idx}
+                    id={`doc-otp-${idx}`}
+                    type='text'
+                    inputMode='numeric'
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleOtpChange(e.target.value, idx)}
+                    onKeyDown={(e) => handleOtpKeyDown(e, idx)}
+                    className='w-11 h-12 text-center text-xl font-bold border border-zinc-300 rounded-lg bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-neutral-800 focus:border-transparent transition-all'
+                  />
+                ))}
+              </div>
+
+              <div className='text-center'>
+                {resendTimer > 0 ? (
+                  <p className='text-xs text-zinc-400'>Resend OTP in <span className='font-semibold text-neutral-700'>{resendTimer}s</span></p>
+                ) : (
+                  <button
+                    type='button'
+                    onClick={handleResendOtp}
+                    disabled={otpSending}
+                    className='text-xs text-neutral-700 underline hover:text-black font-semibold disabled:opacity-50'
+                  >
+                    {otpSending ? 'Sending...' : 'Resend OTP'}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Navigation Controls */}
           <div className='mt-8 flex justify-between items-center border-t border-zinc-100 pt-6'>
             {step > 1 ? (
@@ -354,13 +466,22 @@ function DoctorRegister() {
               >
                 Next Step
               </button>
+            ) : step === 3 ? (
+              <button
+                type='button'
+                onClick={nextStep}
+                disabled={otpSending}
+                className='bg-emerald-700 text-white hover:bg-emerald-800 font-semibold py-3 px-10 rounded-lg transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed ml-auto'
+              >
+                {otpSending ? 'Sending OTP...' : 'Submit & Verify Email'}
+              </button>
             ) : (
               <button 
                 type='submit' 
                 disabled={loading} 
                 className='bg-emerald-700 text-white hover:bg-emerald-800 font-semibold py-3 px-10 rounded-lg transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed ml-auto'
               >
-                {loading ? 'Submitting Registration...' : 'Submit Professional Account'}
+                {loading ? 'Submitting Registration...' : 'Verify & Submit'}
               </button>
             )}
           </div>
