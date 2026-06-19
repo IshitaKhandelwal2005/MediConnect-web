@@ -280,7 +280,7 @@ const AppContextProvider = (props)=>{
     const value ={
         doctors,currencySymbol,token,setToken,atoken,setAToken,dtoken,setDToken,backendUrl,userData,setUserData,loadUserProfileData,getDoctorsData,
         // Admin functions
-        adminDoctors,getAllDoctors,changeAvailability,approveDoctor,getAllAppointments,appointments,cancelAppointment,getDashData,dashData,
+        adminDoctors,setAdminDoctors,getAllDoctors,changeAvailability,approveDoctor,getAllAppointments,appointments,cancelAppointment,getDashData,dashData,setDashData,
         // Doctor functions
         profileData,setProfileData,getProfile,doctorAppointments,setDoctorAppointments,getDoctorAppointments,completeAppointment,cancelDoctorAppointment,doctorDashData,getDoctorDashData,
         // Utility functions

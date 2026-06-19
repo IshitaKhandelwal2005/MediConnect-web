@@ -5,11 +5,13 @@ import {assets} from '../assets/assets'
 import { AppContext } from '../context/AppContext'
 const Navbar=()=> {
     const navigate=useNavigate();
-    const {token,setToken,userData}=useContext(AppContext)
+    const {token,setToken,userData,setUserData}=useContext(AppContext)
     const [showMenu,setShowMenu]=useState(false)
-    const logout =()=>{
-        setToken(false)
+    const logout = () => {
+        setToken('')
+        setUserData(false)
         localStorage.removeItem('token')
+        navigate('/')
     }
   return (
     <div className='flex items-center justify-between text-sm py-4 px-4 sm:px-8 border-b border-b-gray-400 bg-white sticky top-0 z-50'>

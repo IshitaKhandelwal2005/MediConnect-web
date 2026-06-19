@@ -4,15 +4,21 @@ import { AppContext } from '../context/AppContext'
 import {useNavigate} from 'react-router-dom'
 function NavigationBar() {
 
-    const {atoken,setAToken,dtoken,setDToken}=useContext(AppContext)
+    const {atoken,setAToken,dtoken,setDToken,setProfileData,setDoctorAppointments,setDashData,setAdminDoctors}=useContext(AppContext)
     const navigate=useNavigate()
 
-    const logout =()=>{
+    const logout = () => {
+      // Clear all tokens from localStorage
+      localStorage.removeItem('atoken')
+      localStorage.removeItem('dtoken')
+      // Clear all context state immediately so UI re-renders clean
+      setAToken('')
+      setDToken('')
+      setProfileData(false)
+      setDoctorAppointments([])
+      setDashData(false)
+      setAdminDoctors([])
       navigate('/')
-      atoken && setAToken('')
-      atoken && localStorage.removeItem('atoken')
-      dtoken && setDToken('')
-      dtoken && localStorage.removeItem('dtoken')
     }
 
   return (
