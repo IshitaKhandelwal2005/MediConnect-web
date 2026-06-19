@@ -9,6 +9,15 @@ const userSchema=new mongoose.Schema({
     gender:{type:String,default:"Not Selected"},
     dob:{type:String,default:"Not Selected"},
     phone:{type:String,default:"0000000000"},
+    healthRecords: {
+        type: [{
+            name: { type: String, required: true },
+            fileUrl: { type: String, required: true },
+            fileType: { type: String, required: true },
+            uploadedAt: { type: Date, default: Date.now }
+        }],
+        default: []
+    }
 })
 
 const userModel =mongoose.models.user || mongoose.model('user',userSchema)

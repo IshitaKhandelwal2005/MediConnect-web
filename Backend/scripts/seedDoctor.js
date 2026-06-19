@@ -35,6 +35,7 @@ const seedDoctor = async () => {
             },
             date: Date.now(),
             available: true,
+            isApproved: true,
             slots_booked: {}
         }
 

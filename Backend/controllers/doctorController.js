@@ -80,10 +80,25 @@ const appointmentsDoctor =async(req,res)=>{
 const appointmentComplete =async(req,res)=>{
     try{
         const {docId,appointmentId}=req.body
+        const prescriptionFile = req.file
+        
         const appointmentData = await appointmentModel.findById(appointmentId)
         if(appointmentData && appointmentData.docId.toString() === docId)
         {
-            await appointmentModel.findByIdAndUpdate(appointmentId,{isCompleted:true})
+            let prescriptionUrl = ""
+            if (prescriptionFile) {
+                const isPdf = prescriptionFile.mimetype === 'application/pdf' || prescriptionFile.originalname.toLowerCase().endsWith('.pdf');
+                const uploadRes = await cloudinary.uploader.upload(prescriptionFile.path, {
+                    resource_type: isPdf ? 'raw' : 'image',
+                    folder: 'mediconnect/prescriptions'
+                })
+                prescriptionUrl = uploadRes.secure_url
+            }
+
+            await appointmentModel.findByIdAndUpdate(appointmentId,{
+                isCompleted:true,
+                prescription: prescriptionUrl
+            })
             return res.json({success:true,message:'APPOINTMENT COMPLETED'})
         }
         else
@@ -103,8 +118,14 @@ const appointmentCancel =async(req,res)=>{
         const {docId,appointmentId}=req.body
         const appointmentData = await appointmentModel.findById(appointmentId)
         if(appointmentData && appointmentData.docId.toString() === docId)
-
         {
+            if (appointmentData.cancelled) {
+                return res.json({success:false,message:'Appointment is already cancelled'})
+            }
+            if (appointmentData.isCompleted) {
+                return res.json({success:false,message:'Cannot cancel a completed appointment'})
+            }
+            
             await appointmentModel.findByIdAndUpdate(appointmentId,{cancelled:true})
             return res.json({success:true,message:'APPOINTMENT CANCELLED'})
         }

@@ -6,11 +6,21 @@ import StripePayment from '../components/StripePayment'
 const MyAppointments =()=> {
 
 
-  const {backendUrl,token}=useContext(AppContext)
+  const {backendUrl,token,currencySymbol}=useContext(AppContext)
   const [appointments,setAppointments] =useState([])
   const [showPayment, setShowPayment] = useState(false)
   const [selectedAppointment, setSelectedAppointment] = useState(null)
+  
+  // Receipt Modal state
+  const [showReceipt, setShowReceipt] = useState(false)
+  const [receiptAppointment, setReceiptAppointment] = useState(null)
+
   const months= ["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+
+  const openReceiptModal = (appointment) => {
+    setReceiptAppointment(appointment)
+    setShowReceipt(true)
+  }
 
 
   const slotDateFormat =(slotDate)=>{
@@ -102,6 +112,18 @@ const MyAppointments =()=> {
                   {item.cancelled && !item.isCompleted && <button className='sm:min-w-48 py-2 border border-red-500 rounded text-red-500'>Appointment cancelled</button>}
                   {item.isCompleted && <button className='sm:min-w-48 py-2 border border-green-500 rounded text-green-500'>Completed</button>}
                   {item.payment && !item.cancelled && !item.isCompleted && <button className='sm:min-w-48 py-2 border border-green-500 rounded text-green-500'>Paid</button>}
+                  
+                  {/* Receipts & Prescriptions access */}
+                  {!item.cancelled && (item.payment || item.isCompleted) && (
+                    <button onClick={() => openReceiptModal(item)} className='text-xs text-teal-700 text-center sm:min-w-48 py-2 border border-teal-200 rounded bg-teal-50/30 hover:bg-teal-50 hover:text-teal-850 font-medium transition-all duration-300 shadow-sm'>
+                      View Receipt
+                    </button>
+                  )}
+                  {item.isCompleted && item.prescription && (
+                    <a href={item.prescription} target="_blank" rel="noopener noreferrer" className='text-xs text-emerald-700 text-center sm:min-w-48 py-2 border border-emerald-200 rounded bg-emerald-50/30 hover:bg-emerald-50 hover:text-emerald-850 font-bold transition-all duration-300 shadow-sm flex items-center justify-center gap-1'>
+                      📄 Prescription
+                    </a>
+                  )}
               </div>
             </div>
           ))
@@ -117,6 +139,77 @@ const MyAppointments =()=> {
             onSuccess={handlePaymentSuccess}
             onCancel={handlePaymentCancel}
           />
+        </div>
+      )}
+
+      {/* Online Payment Receipt Modal */}
+      {showReceipt && receiptAppointment && (
+        <div className='fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4'>
+          <div className='bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border animate-in fade-in zoom-in-95 duration-200 relative text-gray-700'>
+            <button
+              onClick={() => setShowReceipt(false)}
+              className='absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-lg font-bold'
+            >
+              ✕
+            </button>
+            <div className='text-center border-b pb-4 mb-4'>
+              <h3 className='text-lg font-extrabold text-teal-950'>Payment Receipt</h3>
+              <p className='text-[10px] text-gray-450 mt-1 font-mono'>Receipt No: REC-{receiptAppointment._id.slice(-6).toUpperCase()}</p>
+            </div>
+            
+            <div className='space-y-4 text-xs'>
+              <div className='flex justify-between'>
+                <span className='font-medium text-gray-400'>Date & Time:</span>
+                <span className='text-gray-900 font-bold'>{slotDateFormat(receiptAppointment.slotDate)} | {receiptAppointment.slotTime}</span>
+              </div>
+              
+              <div className='border-t pt-3'>
+                <p className='text-[10px] font-bold text-teal-700 uppercase tracking-wider mb-1.5'>Patient Details</p>
+                <div className='flex justify-between'>
+                  <span className='font-medium text-gray-400'>Name:</span>
+                  <span className='text-gray-950 font-semibold'>{receiptAppointment.userData.name}</span>
+                </div>
+              </div>
+
+              <div className='border-t pt-3'>
+                <p className='text-[10px] font-bold text-teal-700 uppercase tracking-wider mb-1.5'>Provider Details</p>
+                <div className='flex justify-between'>
+                  <span className='font-medium text-gray-400'>Doctor:</span>
+                  <span className='text-gray-950 font-semibold'>{receiptAppointment.docData.name}</span>
+                </div>
+                <div className='flex justify-between mt-1'>
+                  <span className='font-medium text-gray-400'>Speciality:</span>
+                  <span className='text-gray-950 font-semibold'>{receiptAppointment.docData.speciality}</span>
+                </div>
+              </div>
+
+              <div className='border-t border-b py-3 my-2 bg-teal-50/30 px-3 rounded-xl border-dashed border-teal-200'>
+                <div className='flex justify-between items-center'>
+                  <span className='font-bold text-teal-950 text-sm'>Total Paid</span>
+                  <span className='text-base font-extrabold text-teal-950'>{currencySymbol || '₹'}{receiptAppointment.amount}</span>
+                </div>
+                <div className='flex justify-between items-center mt-1 text-[10px] text-emerald-600 font-bold'>
+                  <span>Status</span>
+                  <span className='flex items-center gap-1'>✓ Paid Online</span>
+                </div>
+              </div>
+            </div>
+
+            <div className='mt-6 flex gap-3'>
+              <button
+                onClick={() => setShowReceipt(false)}
+                className='flex-1 bg-gray-950 hover:bg-gray-800 text-white font-semibold py-2.5 rounded-xl text-xs transition-all shadow-md'
+              >
+                Close
+              </button>
+              <button
+                onClick={() => window.print()}
+                className='flex-1 bg-teal-50 border border-teal-200 hover:bg-teal-150 text-teal-700 font-semibold py-2.5 rounded-xl text-xs transition-all'
+              >
+                Print Receipt
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
