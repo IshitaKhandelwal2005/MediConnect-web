@@ -150,6 +150,7 @@ const AppContextProvider = (props)=>{
             {
                 toast.success(data.message)
                 getAllAppointments()
+                getDoctorsData() // Refresh slots so cancelled slot reappears in booking UI
             }
             else
             {
@@ -228,6 +229,7 @@ const AppContextProvider = (props)=>{
             {
                 toast.success(data.message)
                 getDoctorAppointments()
+                getDoctorsData() // Refresh slots so cancelled slot reappears in booking UI
             }
             else
             {

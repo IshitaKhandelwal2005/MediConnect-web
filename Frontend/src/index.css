@@ -22,3 +22,9 @@
         @apply text-white bg-[#1D2129]
     }
 }
+
+/* Hide default browser eye icon for password inputs (Edge/Windows) */
+input::-ms-reveal,
+input::-ms-clear {
+    display: none;
+}

@@ -16,6 +16,11 @@ const Login = () => {
   const [gender, setGender] = useState('')
   const [address1, setAddress1] = useState('')
   const [address2, setAddress2] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  // Password visibility toggles
+  const [showLoginPw, setShowLoginPw] = useState(false)
+  const [showSignupPw, setShowSignupPw] = useState(false)
+  const [showConfirmPw, setShowConfirmPw] = useState(false)
   // OTP states
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
   const [otpSending, setOtpSending] = useState(false)
@@ -65,6 +70,8 @@ const Login = () => {
       if (!name.trim()) { toast.error('Please enter your full name'); return false }
       if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) { toast.error('Please enter a valid email address'); return false }
       if (password.length < 8) { toast.error('Password must be at least 8 characters long'); return false }
+      if (!confirmPassword) { toast.error('Please confirm your password'); return false }
+      if (password !== confirmPassword) { toast.error('Passwords do not match'); return false }
     }
     return true
   }
@@ -270,11 +277,22 @@ const Login = () => {
               </div>
               <div>
                 <label className='block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1'>Password</label>
-                <input
-                  className='border border-zinc-300 rounded-lg w-full p-3 bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-neutral-800 focus:bg-white focus:border-transparent transition-all'
-                  type='password' placeholder='••••••••'
-                  onChange={(e) => setPassword(e.target.value)} value={password} required
-                />
+                <div className='relative'>
+                  <input
+                    className='border border-zinc-300 rounded-lg w-full p-3 pr-10 bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-neutral-800 focus:bg-white focus:border-transparent transition-all'
+                    type={showLoginPw ? 'text' : 'password'} placeholder='••••••••'
+                    onChange={(e) => setPassword(e.target.value)} value={password} required
+                  />
+                  {password && (
+                    <button type='button' onClick={() => setShowLoginPw(v => !v)}
+                      className='absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 transition-colors'>
+                      {showLoginPw
+                        ? <svg xmlns='http://www.w3.org/2000/svg' className='w-4 h-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21' /></svg>
+                        : <svg xmlns='http://www.w3.org/2000/svg' className='w-4 h-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 12a3 3 0 11-6 0 3 3 0 016 0z' /><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' /></svg>
+                      }
+                    </button>
+                  )}
+                </div>
               </div>
             </>
           )}
@@ -300,11 +318,46 @@ const Login = () => {
               </div>
               <div>
                 <label className='block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1'>Password</label>
-                <input
-                  className='border border-zinc-300 rounded-lg w-full p-3 bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-neutral-800 focus:bg-white focus:border-transparent transition-all'
-                  type='password' placeholder='••••••••'
-                  onChange={(e) => setPassword(e.target.value)} value={password} required
-                />
+                <div className='relative'>
+                  <input
+                    className='border border-zinc-300 rounded-lg w-full p-3 pr-10 bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-neutral-800 focus:bg-white focus:border-transparent transition-all'
+                    type={showSignupPw ? 'text' : 'password'} placeholder='••••••••'
+                    onChange={(e) => setPassword(e.target.value)} value={password} required
+                  />
+                  {password && (
+                    <button type='button' onClick={() => setShowSignupPw(v => !v)}
+                      className='absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 transition-colors'>
+                      {showSignupPw
+                        ? <svg xmlns='http://www.w3.org/2000/svg' className='w-4 h-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21' /></svg>
+                        : <svg xmlns='http://www.w3.org/2000/svg' className='w-4 h-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 12a3 3 0 11-6 0 3 3 0 016 0z' /><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' /></svg>
+                      }
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div>
+                <label className='block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1'>Confirm Password</label>
+                <div className='relative'>
+                  <input
+                    className={`border rounded-lg w-full p-3 pr-10 bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-neutral-800 focus:bg-white focus:border-transparent transition-all ${
+                      confirmPassword && confirmPassword !== password ? 'border-red-400' : 'border-zinc-300'
+                    }`}
+                    type={showConfirmPw ? 'text' : 'password'} placeholder='••••••••'
+                    onChange={(e) => setConfirmPassword(e.target.value)} value={confirmPassword} required
+                  />
+                  {confirmPassword && (
+                    <button type='button' onClick={() => setShowConfirmPw(v => !v)}
+                      className='absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 transition-colors'>
+                      {showConfirmPw
+                        ? <svg xmlns='http://www.w3.org/2000/svg' className='w-4 h-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21' /></svg>
+                        : <svg xmlns='http://www.w3.org/2000/svg' className='w-4 h-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 12a3 3 0 11-6 0 3 3 0 016 0z' /><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' /></svg>
+                      }
+                    </button>
+                  )}
+                </div>
+                {confirmPassword && confirmPassword !== password && (
+                  <p className='text-xs text-red-500 mt-1'>Passwords do not match</p>
+                )}
               </div>
             </div>
           )}

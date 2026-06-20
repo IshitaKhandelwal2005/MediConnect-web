@@ -6,7 +6,7 @@ import StripePayment from '../components/StripePayment'
 const MyAppointments =()=> {
 
 
-  const {backendUrl,token,currencySymbol}=useContext(AppContext)
+  const {backendUrl,token,currencySymbol,getDoctorsData}=useContext(AppContext)
   const [appointments,setAppointments] =useState([])
   const [showPayment, setShowPayment] = useState(false)
   const [selectedAppointment, setSelectedAppointment] = useState(null)
@@ -50,6 +50,7 @@ const MyAppointments =()=> {
       {
         toast.success(data.message)
         getUserAppointments()
+        getDoctorsData() // Refresh doctor slots so the freed time reappears in the booking UI
       }
       else
       {
