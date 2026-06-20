@@ -76,3 +76,57 @@ export const sendOtpEmail = async (email, otp, recipientName = 'User') => {
 
     await transporter.sendMail(mailOptions);
 };
+
+export const sendReminderEmail = async (email, patientName, doctorName, date, time, reminderType) => {
+    const transporter = createTransporter();
+    const timeText = reminderType === '24h' ? 'tomorrow' : 'in 1 hour';
+
+    const mailOptions = {
+        from: `"MediConnect" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: `Appointment Reminder: You have an appointment ${timeText}`,
+        html: `
+        <!DOCTYPE html>
+        <html>
+        <body style="font-family:'Segoe UI',Arial,sans-serif; background:#f5f5f5; padding:40px 0;">
+            <table width="520" align="center" style="background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+                <tr><td style="background:#002000; padding:28px 40px; text-align:center;"><h1 style="color:#ffffff; margin:0;">MediConnect</h1></td></tr>
+                <tr><td style="padding:40px;">
+                    <p>Hi ${patientName},</p>
+                    <p>This is a reminder for your upcoming appointment with <strong>Dr. ${doctorName}</strong>.</p>
+                    <p><strong>Date:</strong> ${date}<br><strong>Time:</strong> ${time}</p>
+                    <p>Please ensure you are available at the scheduled time.</p>
+                </td></tr>
+            </table>
+        </body>
+        </html>
+        `
+    };
+    await transporter.sendMail(mailOptions);
+};
+
+export const sendCancellationEmail = async (email, patientName, doctorName, date, time) => {
+    const transporter = createTransporter();
+    
+    const mailOptions = {
+        from: `"MediConnect" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: `Appointment Cancelled`,
+        html: `
+        <!DOCTYPE html>
+        <html>
+        <body style="font-family:'Segoe UI',Arial,sans-serif; background:#f5f5f5; padding:40px 0;">
+            <table width="520" align="center" style="background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+                <tr><td style="background:#B22222; padding:28px 40px; text-align:center;"><h1 style="color:#ffffff; margin:0;">MediConnect</h1></td></tr>
+                <tr><td style="padding:40px;">
+                    <p>Hi ${patientName},</p>
+                    <p>Your appointment with <strong>Dr. ${doctorName}</strong> scheduled for <strong>${date}</strong> at <strong>${time}</strong> has been cancelled.</p>
+                    <p>If you have any questions, please contact our support team or book a new appointment.</p>
+                </td></tr>
+            </table>
+        </body>
+        </html>
+        `
+    };
+    await transporter.sendMail(mailOptions);
+};

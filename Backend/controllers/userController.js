@@ -7,7 +7,7 @@ import doctorModel from '../models/doctorModel.js'
 import appointmentModel from '../models/appointmentModel.js'
 import Razorpay from 'razorpay'
 import otpModel from '../models/otpModel.js'
-import { sendOtpEmail } from '../utils/emailService.js'
+import { sendOtpEmail, sendCancellationEmail } from '../utils/emailService.js'
 
 // Send OTP for user registration
 const sendOtp = async (req, res) => {
@@ -309,6 +309,13 @@ const cancelAppointment =async (req,res)=>{
 
        slots_booked[slotDate]=slots_booked[slotDate].filter(e =>e!=slotTime)
         await doctorModel.findByIdAndUpdate(docId,{slots_booked})
+        
+        try {
+            await sendCancellationEmail(appointmentData.userData.email, appointmentData.userData.name, doctorData.name, slotDate, slotTime);
+        } catch (emailError) {
+            console.log("Failed to send cancellation email:", emailError);
+        }
+
         res.json({success:true,message:"Appointment cancelled"})
     }
     catch(error)

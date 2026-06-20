@@ -8,12 +8,14 @@ import multer from 'multer'
 import doctorRouter from './routes/doctorRoute.js'
 import userRouter from './routes/userRoute.js'
 import paymentRouter from './routes/paymentRoute.js'
+import { startReminderJob } from './jobs/appointmentReminders.js'
 
 const app=express() // routes,middleware
 const port=process.env.PORT || 4000
 
 connectDB()
 connectCloudinary()
+startReminderJob()
 app.use(express.json())
 app.use(cors({
     origin: '*', // Allows all origins

@@ -12,7 +12,9 @@ const appointmentSchema =new mongoose.Schema({
     cancelled:{type:Boolean,default:false},
     payment:{type:Boolean,default:false},
     isCompleted:{type:Boolean,default:false},
-    prescription:{type:String,default:""}
+    prescription:{type:String,default:""},
+    reminder24hSent:{type:Boolean,default:false},
+    reminder1hSent:{type:Boolean,default:false}
 })
 
 appointmentSchema.statics.autoCompleteAppointments = async function() {
