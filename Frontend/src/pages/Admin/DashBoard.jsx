@@ -1,9 +1,12 @@
 import React, { useContext, useEffect } from 'react'
-import { AppContext } from '../../context/AppContext'
-import {assets} from '../../assets/assets'
+import { useAppContext } from '../../context/AppContext';
+import { useAuthContext } from '../../context/AuthContext';
+import { useAdminContext } from '../../context/AdminContext';import {assets} from '../../assets/assets'
 function DashBoard() {
 
-  const {getDashData,atoken,cancelAppointment,dashData,slotDateFormat}=useContext(AppContext)
+  const { slotDateFormat } = useAppContext();
+  const { atoken } = useAuthContext();
+  const { getDashData, cancelAppointment, dashData } = useAdminContext();
   useEffect(()=>{
     if(atoken)
     {

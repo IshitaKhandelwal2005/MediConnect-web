@@ -14,7 +14,7 @@ import Footer from './components/Footer'
 import {ToastContainer ,toast} from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'
 import { useContext } from 'react'
-import { AppContext } from './context/AppContext'
+import { useAuthContext } from './context/AuthContext';
 import NavigationBar from './components/NavigationBar'
 import Sidebar from './components/Sidebar'
 import DashBoard from './pages/Admin/DashBoard'
@@ -29,7 +29,7 @@ import DoctorRegister from './pages/DoctorRegister'
 import HealthRecords from './pages/HealthRecords'
 
 function App() {
-  const {atoken, dtoken} = useContext(AppContext)
+  const { atoken, dtoken } = useAuthContext();
   
   return(
     <div className='w-full'>

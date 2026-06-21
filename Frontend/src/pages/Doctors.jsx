@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { AppContext } from '../context/AppContext';
+import { useAppContext } from '../context/AppContext';
 
 const Doctors = () => {
   const { speciality } = useParams();
@@ -9,7 +9,7 @@ const Doctors = () => {
   const [searchCity, setSearchCity] = useState(cityParam);
   const [filterDoc, setFilterDoc] = useState([]);
   const [showFilter, setShowFilter] = useState(false)
-  const { doctors } = useContext(AppContext);
+  const { doctors } = useAppContext();;
   const navigate = useNavigate();
 
   useEffect(() => {

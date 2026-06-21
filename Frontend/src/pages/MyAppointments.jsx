@@ -1,12 +1,13 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { AppContext } from '../context/AppContext'
-import axios from 'axios'
+import { useAppContext } from '../context/AppContext';
+import { useAuthContext } from '../context/AuthContext';import axios from 'axios'
 import { toast } from 'react-toastify'
 import StripePayment from '../components/StripePayment'
 const MyAppointments =()=> {
 
 
-  const {backendUrl,token,currencySymbol,getDoctorsData}=useContext(AppContext)
+  const { backendUrl, currencySymbol, getDoctorsData } = useAppContext();
+  const { token } = useAuthContext();
   const [appointments,setAppointments] =useState([])
   const [showPayment, setShowPayment] = useState(false)
   const [selectedAppointment, setSelectedAppointment] = useState(null)

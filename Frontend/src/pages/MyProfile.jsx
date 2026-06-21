@@ -1,10 +1,11 @@
 import React, { useContext, useState } from 'react'
 import {assets} from '../assets/assets'
-import { AppContext } from '../context/AppContext'
-import { toast } from 'react-toastify'
+import { useAppContext } from '../context/AppContext';
+import { useAuthContext } from '../context/AuthContext';import { toast } from 'react-toastify'
 import axios from 'axios'
 const MyProfile=()=> {
-  const {userData,setUserData,token,backendUrl,loadUserProfileData}=useContext(AppContext)
+  const { backendUrl } = useAppContext();
+  const { userData, setUserData, token, loadUserProfileData } = useAuthContext();
 
 
   const [isEdit,setIsEdit]=useState(false)

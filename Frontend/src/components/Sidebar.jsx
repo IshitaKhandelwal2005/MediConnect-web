@@ -1,10 +1,9 @@
 import React, { useContext } from 'react'
-import { AppContext } from '../context/AppContext'
-import {NavLink} from 'react-router-dom'
+import { useAuthContext } from '../context/AuthContext';import {NavLink} from 'react-router-dom'
 import { assets } from '../assets/assets'
 function Sidebar() {
 
-  const {atoken,dtoken}=useContext(AppContext)
+  const { atoken, dtoken } = useAuthContext();
   return (
     <div className='min-h-screen bg-white border-r border-gray-200 w-64 flex-shrink-0'>
         {

@@ -1,10 +1,12 @@
 import React, { useContext, useEffect, useState, useRef } from 'react';
-import { AppContext } from '../context/AppContext';
+import { useAppContext } from '../context/AppContext';
+import { useAuthContext } from '../context/AuthContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const HealthRecords = () => {
-    const { backendUrl, token } = useContext(AppContext);
+    const { backendUrl } = useAppContext();
+  const { token } = useAuthContext();;
     const [activeTab, setActiveTab] = useState('uploads'); // 'uploads' or 'prescriptions'
     const [records, setRecords] = useState([]);
     const [appointments, setAppointments] = useState([]);

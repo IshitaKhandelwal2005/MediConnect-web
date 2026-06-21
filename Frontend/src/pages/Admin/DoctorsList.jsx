@@ -1,8 +1,8 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { AppContext } from '../../context/AppContext'
-
-function DoctorsList() {
-  const { adminDoctors, getAllDoctors, atoken, changeAvailability, approveDoctor } = useContext(AppContext)
+import { useAuthContext } from '../../context/AuthContext';
+import { useAdminContext } from '../../context/AdminContext';function DoctorsList() {
+  const { atoken } = useAuthContext();
+  const { adminDoctors, getAllDoctors, changeAvailability, approveDoctor } = useAdminContext();
   const [activeTab, setActiveTab] = useState('active') // 'active' or 'pending'
 
   useEffect(() => {

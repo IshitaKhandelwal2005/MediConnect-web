@@ -1,11 +1,9 @@
 import React, { useContext } from 'react'
 import { assets } from '../assets/assets'
 import { useNavigate } from 'react-router-dom'
-import { AppContext } from '../context/AppContext'
-
-const Banner=() =>{
+import { useAuthContext } from '../context/AuthContext';const Banner=() =>{
     const navigate=useNavigate()
-    const { token } = useContext(AppContext)
+    const { token } = useAuthContext();
   return (
     <div className='flex bg-[#1D2129] justify-center text-center items-center rounded-lg px-6 sm:px-10 md:px-14 lg:px-12 my-20 md:mx-10'>
         <div className='flex-1 py-8 sm:py-10 md:py-16 lg:py-24 lg:pl-5'>

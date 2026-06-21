@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
 
 const appointmentSchema =new mongoose.Schema({
-    userId:{type:String,required:true},
-    docId:{type:String,required:true},
+    userId:{type:String,required:true,index:true},
+    docId:{type:String,required:true,index:true},
     slotDate:{type:String,required:true},
     slotTime:{type:String,required:true},
     userData:{type:Object,required:true},
@@ -16,6 +16,8 @@ const appointmentSchema =new mongoose.Schema({
     reminder24hSent:{type:Boolean,default:false},
     reminder1hSent:{type:Boolean,default:false}
 })
+
+appointmentSchema.index({ cancelled: 1, isCompleted: 1 });
 
 appointmentSchema.statics.autoCompleteAppointments = async function() {
     try {

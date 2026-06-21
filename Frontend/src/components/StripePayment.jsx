@@ -1,9 +1,9 @@
 import React, { useState, useContext } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
-import { AppContext } from '../context/AppContext';
+import { useAppContext } from '../context/AppContext';
 
 const StripePayment = ({ appointmentId, amount, doctorName, onSuccess, onCancel }) => {
-    const { currencySymbol } = useContext(AppContext);
+    const { currencySymbol } = useAppContext();;
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 

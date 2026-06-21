@@ -1,19 +1,15 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { AppContext } from '../../context/AppContext';
+import { useAppContext } from '../../context/AppContext';
+import { useAuthContext } from '../../context/AuthContext';
+import { useDoctorContext } from '../../context/DoctorContext';
 import { assets } from '../../assets/assets';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const DoctorDashboard = () => {
-  const {
-    dtoken,
-    doctorDashData,
-    getDoctorDashData,
-    cancelDoctorAppointment,
-    slotDateFormat,
-    currencySymbol,
-    backendUrl
-  } = useContext(AppContext);
+  const { slotDateFormat, currencySymbol, backendUrl } = useAppContext();
+  const { dtoken } = useAuthContext();
+  const { doctorDashData, getDoctorDashData, cancelDoctorAppointment } = useDoctorContext();;
 
   // Complete Appointment Modal state
   const [completeModalOpen, setCompleteModalOpen] = useState(false);

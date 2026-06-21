@@ -6,7 +6,7 @@ const authUser =async(req,res,next) =>{
         const {token}=req.headers
         if(!token)
         {
-            return res.json({success:false,message:"not authorized login again"})
+            return res.status(401).json({success:false,message:"not authorized login again"})
 
         }
         const token_decode =jwt.verify(token,process.env.JWT_SECRET)
@@ -17,7 +17,10 @@ const authUser =async(req,res,next) =>{
     catch(error)
     {
         console.log(error)
-        res.json({success:false,message:"Invalid Credentials"})
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ success: false, message: "Token expired" });
+        }
+        res.status(401).json({success:false,message:"Invalid Credentials"})
     }
 }
 

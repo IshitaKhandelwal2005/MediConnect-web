@@ -7,6 +7,9 @@ export const startReminderJob = () => {
     cron.schedule('*/5 * * * *', async () => {
         try {
             const now = new Date();
+            // Automatically complete past appointments
+            await appointmentModel.autoCompleteAppointments();
+            
             // We only need to check appointments where at least one reminder is not sent
             const appointments = await appointmentModel.find({
                 cancelled: false,

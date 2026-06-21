@@ -1,13 +1,15 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { AppContext } from '../context/AppContext';
+import { useAppContext } from '../context/AppContext';
+import { useAuthContext } from '../context/AuthContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const PaymentSuccess = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const { backendUrl, token } = useContext(AppContext);
+    const { backendUrl } = useAppContext();
+  const { token } = useAuthContext();;
     const [verifying, setVerifying] = useState(true);
     const [verified, setVerified] = useState(false);
 

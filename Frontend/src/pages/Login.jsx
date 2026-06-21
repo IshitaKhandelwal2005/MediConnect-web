@@ -1,11 +1,12 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { AppContext } from '../context/AppContext'
-import axios from 'axios'
+import { useAppContext } from '../context/AppContext';
+import { useAuthContext } from '../context/AuthContext';import axios from 'axios'
 import { toast } from 'react-toastify'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 const Login = () => {
-  const { backendUrl, token, setToken, atoken, setAToken, dtoken, setDToken } = useContext(AppContext)
+  const { backendUrl } = useAppContext();
+  const { token, setToken, atoken, setAToken, dtoken, setDToken } = useAuthContext();
   const [state, setState] = useState('Login') // 'Sign Up' or 'Login'
   const [profession, setProfession] = useState('User') // 'User', 'Doctor', 'Admin'
   const [email, setEmail] = useState('')

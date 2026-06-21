@@ -1,10 +1,13 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { AppContext } from '../../context/AppContext'
-import axios from 'axios'
+import { useAppContext } from '../../context/AppContext';
+import { useAuthContext } from '../../context/AuthContext';
+import { useDoctorContext } from '../../context/DoctorContext';import axios from 'axios'
 import {toast} from 'react-toastify'
 
 export const DoctorProfile = () => {
-  const {dtoken,profileData,setProfileData,getProfile,backendUrl,currencySymbol}=useContext(AppContext)
+  const { backendUrl, currencySymbol } = useAppContext();
+  const { dtoken } = useAuthContext();
+  const { profileData, setProfileData, getProfile } = useDoctorContext();
   const [isEdit,setIsEdit]=useState(false)
 
   const updateProfile =async()=>{

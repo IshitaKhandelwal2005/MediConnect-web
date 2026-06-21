@@ -2,12 +2,18 @@ import React, { useContext, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
 import {assets} from '../assets/assets'
-import { AppContext } from '../context/AppContext'
+import { useAppContext } from '../context/AppContext';
+import { useAuthContext } from '../context/AuthContext';
+import axios from 'axios';
 const Navbar=()=> {
     const navigate=useNavigate();
-    const {token,setToken,userData,setUserData}=useContext(AppContext)
+    const { backendUrl } = useAppContext();
+    const { token, setToken, userData, setUserData } = useAuthContext();
     const [showMenu,setShowMenu]=useState(false)
-    const logout = () => {
+    const logout = async () => {
+        try {
+            await axios.post(backendUrl + '/api/user/logout');
+        } catch(err) { console.log(err) }
         setToken('')
         setUserData(false)
         localStorage.removeItem('token')

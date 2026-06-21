@@ -1,7 +1,6 @@
 import React, { useContext, useState, useEffect } from 'react'
 import { assets } from '../assets/assets'
-import { AppContext } from '../context/AppContext'
-import { toast } from 'react-toastify'
+import { useAppContext } from '../context/AppContext';import { toast } from 'react-toastify'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 
@@ -32,7 +31,7 @@ function DoctorRegister() {
   const [otpSending, setOtpSending] = useState(false)
   const [resendTimer, setResendTimer] = useState(0)
 
-  const { backendUrl } = useContext(AppContext)
+  const { backendUrl } = useAppContext();
   const navigate = useNavigate()
 
   // Validate step transitions

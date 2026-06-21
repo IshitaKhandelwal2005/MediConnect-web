@@ -1,20 +1,15 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { AppContext } from '../../context/AppContext';
+import { useAppContext } from '../../context/AppContext';
+import { useAuthContext } from '../../context/AuthContext';
+import { useDoctorContext } from '../../context/DoctorContext';
 import { assets } from '../../assets/assets';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const DoctorAppointments = () => {
-  const {
-    dtoken,
-    doctorAppointments,
-    getDoctorAppointments,
-    cancelDoctorAppointment,
-    calculateAge,
-    slotDateFormat,
-    currencySymbol,
-    backendUrl
-  } = useContext(AppContext);
+  const { calculateAge, slotDateFormat, currencySymbol, backendUrl } = useAppContext();
+  const { dtoken } = useAuthContext();
+  const { doctorAppointments, getDoctorAppointments, cancelDoctorAppointment } = useDoctorContext();;
 
   // Patient EHR Modal state
   const [ehrModalOpen, setEhrModalOpen] = useState(false);

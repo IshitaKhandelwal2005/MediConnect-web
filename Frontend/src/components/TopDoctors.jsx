@@ -1,9 +1,8 @@
 import React, { useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AppContext } from '../context/AppContext'
-const TopDoctors=()=> {
+import { useAppContext } from '../context/AppContext';const TopDoctors=()=> {
     const navigate=useNavigate()
-    const {doctors}=useContext(AppContext)
+    const { doctors } = useAppContext();
   return (
     <div className='flex flex-col gap-4 items-center text-gray-800 my-16 md:mx-10'>
         <h1 className='text-2xl font-medium'>Top Doctors to Book</h1>

@@ -1,13 +1,14 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { AppContext } from '../context/AppContext'
-import { assets } from '../assets/assets';
+import { useAppContext } from '../context/AppContext';
+import { useAuthContext } from '../context/AuthContext';import { assets } from '../assets/assets';
 import axios from 'axios'
 import RelatedDoctors from '../components/RelatedDoctors';
 import { toast } from 'react-toastify';
 const Appointments = () => {
   const { docId } = useParams();
-  const { doctors, currencySymbol, backendUrl, token, getDoctorsData } = useContext(AppContext);
+  const { doctors, currencySymbol, backendUrl, getDoctorsData } = useAppContext();
+  const { token } = useAuthContext();;
   const [docInfo, setDocInfo] = useState(null);
   const [docSlots, setDocSlots] = useState([])
   const [slotIndex, setSlotIndex] = useState(0)

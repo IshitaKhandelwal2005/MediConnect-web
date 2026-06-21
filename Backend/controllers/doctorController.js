@@ -2,10 +2,12 @@ import doctorModel from "../models/doctorModel.js"
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import appointmentModel from '../models/appointmentModel.js'
+import { generateTokens, verifyRefreshToken } from '../utils/jwt.js'
 import validator from 'validator'
 import {v2 as cloudinary} from 'cloudinary'
 import otpModel from '../models/otpModel.js'
 import { sendOtpEmail, sendCancellationEmail } from '../utils/emailService.js'
+import { cacheGet, cacheSet, cacheDel } from '../config/redis.js'
 
 // Send OTP for doctor registration
 const sendDoctorOtp = async (req, res) => {
@@ -46,6 +48,8 @@ const changeAvailability=async(req,res)=>{
         console.log(docId)
         const docData=await doctorModel.findById(docId)
         await doctorModel.findByIdAndUpdate(docId,{available:!docData.available})
+        await cacheDel('doctors:approved:list')
+        await cacheDel('admin:doctors:list')
         res.json({success:true,message:'Availability changed'})
     }
     catch(error)
@@ -57,7 +61,15 @@ const changeAvailability=async(req,res)=>{
 
 const doctorList =async(req,res)=>{
     try{
-        const doctors=await doctorModel.find({ isApproved: true }).select(['-password','-email'])
+        const cacheKey = 'doctors:approved:list';
+        const cachedData = await cacheGet(cacheKey);
+        if (cachedData) {
+            console.log("Cache HIT - Returning from Redis");
+            return res.json({ success: true, doctors: cachedData });
+        }
+        console.log("Cache MISS - Fetching from DB");
+        const doctors=await doctorModel.find({ isApproved: true }).select(['-password','-email']).lean()
+        await cacheSet(cacheKey, doctors);
         res.json({success:true,doctors})
     }
     catch(error)
@@ -83,8 +95,16 @@ const loginDoctor =async(req,res)=>{
             if (!doctor.isApproved) {
                 return res.json({success:false,message:'Your account is pending admin verification and approval.'})
             }
-            const token = jwt.sign({id:doctor._id},process.env.JWT_SECRET)
-            res.json({success:true,token})
+            const { accessToken, refreshToken } = generateTokens({ id: doctor._id, role: 'doctor' })
+
+            res.cookie('refreshToken', refreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'None',
+                maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+            })
+
+            res.json({success:true,token: accessToken})
         }
         else
         {
@@ -101,8 +121,7 @@ const loginDoctor =async(req,res)=>{
 const appointmentsDoctor =async(req,res)=>{
     try{
         const {docId}=req.body
-        await appointmentModel.autoCompleteAppointments()
-        const appointments=await appointmentModel.find({docId})
+        const appointments=await appointmentModel.find({docId}).lean()
 
         res.json({success:true,appointments})
     }
@@ -135,6 +154,8 @@ const appointmentComplete =async(req,res)=>{
                 isCompleted:true,
                 prescription: prescriptionUrl
             })
+            await cacheDel('doctors:approved:list')
+            await cacheDel('admin:dashboard')
             return res.json({success:true,message:'APPOINTMENT COMPLETED'})
         }
         else
@@ -170,6 +191,8 @@ const appointmentCancel =async(req,res)=>{
                 console.log("Failed to send cancellation email:", emailError);
             }
 
+            await cacheDel('doctors:approved:list')
+            await cacheDel('admin:dashboard')
             return res.json({success:true,message:'APPOINTMENT CANCELLED'})
         }
         else
@@ -187,8 +210,7 @@ const appointmentCancel =async(req,res)=>{
 const doctorDashboard =async(req,res)=>{
     try{
         const {docId}=req.body
-        await appointmentModel.autoCompleteAppointments()
-        const appointments=await appointmentModel.find({docId})
+        const appointments=await appointmentModel.find({docId}).lean()
         let earnings=0
 
         appointments.map((item)=>{
@@ -223,7 +245,7 @@ const doctorDashboard =async(req,res)=>{
 const doctorProfile =async(req,res)=>{
     try{
         const {docId}=req.body;
-        const profileData=await doctorModel.findById(docId).select('-password')
+        const profileData=await doctorModel.findById(docId).select('-password').lean()
 
         res.json({success:true,profileData})
     }
@@ -246,7 +268,8 @@ const updateDoctorProfile =async(req,res)=>{
         }
 
         await doctorModel.findByIdAndUpdate(docId,{fees: Number(fees),address,available})
-
+        await cacheDel('doctors:approved:list')
+        await cacheDel('admin:doctors:list')
         res.json({success:true,message:'Profile Updated'})
     }
     catch(error)
@@ -331,6 +354,8 @@ const registerDoctor = async (req, res) => {
         const newDoctor = new doctorModel(doctorData);
         await newDoctor.save();
 
+        await cacheDel('admin:doctors:list')
+        await cacheDel('admin:dashboard')
         res.json({ success: true, message: "Doctor registration submitted. Pending admin approval." });
     } catch (error) {
         console.log(error);
@@ -338,4 +363,51 @@ const registerDoctor = async (req, res) => {
     }
 }
 
-export {changeAvailability,updateDoctorProfile,doctorProfile,doctorDashboard,doctorList,loginDoctor,appointmentsDoctor,appointmentCancel,appointmentComplete,registerDoctor,sendDoctorOtp}
+const refreshTokenDoctor = async (req, res) => {
+    try {
+        const { refreshToken } = req.cookies;
+        if (!refreshToken) {
+            return res.json({ success: false, message: "No refresh token provided" });
+        }
+
+        const decoded = verifyRefreshToken(refreshToken);
+        if (!decoded || decoded.role !== 'doctor') {
+            return res.json({ success: false, message: "Invalid refresh token" });
+        }
+
+        const doctor = await doctorModel.findById(decoded.id);
+        if (!doctor || !doctor.isApproved) {
+            return res.json({ success: false, message: "Doctor no longer exists or not approved" });
+        }
+
+        const { accessToken, refreshToken: newRefreshToken } = generateTokens({ id: doctor._id, role: 'doctor' });
+
+        res.cookie('refreshToken', newRefreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'None',
+            maxAge: 30 * 24 * 60 * 60 * 1000
+        });
+
+        res.json({ success: true, token: accessToken });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+}
+
+const logoutDoctor = async (req, res) => {
+    try {
+        res.clearCookie('refreshToken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'None',
+        });
+        res.json({ success: true, message: "Logged out successfully" });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+}
+
+export {changeAvailability,updateDoctorProfile,doctorProfile,doctorDashboard,doctorList,loginDoctor,appointmentsDoctor,appointmentCancel,appointmentComplete,registerDoctor,sendDoctorOtp,refreshTokenDoctor,logoutDoctor}

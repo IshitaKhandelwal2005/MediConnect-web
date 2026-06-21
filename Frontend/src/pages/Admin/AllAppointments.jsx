@@ -1,6 +1,8 @@
 import React, { useContext, useEffect } from 'react';
 
-import { AppContext } from '../../context/AppContext';
+import { useAppContext } from '../../context/AppContext';
+import { useAuthContext } from '../../context/AuthContext';
+import { useAdminContext } from '../../context/AdminContext';
 
 import { assets } from '../../assets/assets';
 
@@ -8,7 +10,9 @@ import { assets } from '../../assets/assets';
 
 function AllAppointments() {
 
-  const { atoken, getAllAppointments, appointments,cancelAppointment,calculateAge,slotDateFormat,currencySymbol } = useContext(AppContext);
+  const { calculateAge, slotDateFormat, currencySymbol } = useAppContext();
+  const { atoken } = useAuthContext();
+  const { getAllAppointments, appointments, cancelAppointment } = useAdminContext();;
 
   useEffect(() => {
 

@@ -1,7 +1,7 @@
 import React, { useContext, useState } from 'react'
 import { assets } from '../../assets/assets'
-import { AppContext } from '../../context/AppContext'
-import {toast} from 'react-toastify'
+import { useAppContext } from '../../context/AppContext';
+import { useAuthContext } from '../../context/AuthContext';import {toast} from 'react-toastify'
 import axios from 'axios'
 function AddDoctor() {
 
@@ -17,7 +17,8 @@ function AddDoctor() {
   const [address1,setAddress1]=useState('')
   const [address2,setAddress2]=useState('')
 
-  const {backendUrl,atoken}=useContext(AppContext)
+  const { backendUrl } = useAppContext();
+  const { atoken } = useAuthContext();
   const onSubmitHandler=async (event) =>{
     event.preventDefault()
     try{

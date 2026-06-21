@@ -1,13 +1,14 @@
 import validator from 'validator'
 import bcrypt from 'bcryptjs'
 import userModel from '../models/userModel.js'
-import jwt from 'jsonwebtoken'
+import { generateTokens, verifyRefreshToken } from '../utils/jwt.js'
 import {v2 as cloudinary} from 'cloudinary'
 import doctorModel from '../models/doctorModel.js'
 import appointmentModel from '../models/appointmentModel.js'
 import Razorpay from 'razorpay'
 import otpModel from '../models/otpModel.js'
 import { sendOtpEmail, sendCancellationEmail } from '../utils/emailService.js'
+import { cacheDel } from '../config/redis.js'
 
 // Send OTP for user registration
 const sendOtp = async (req, res) => {
@@ -115,9 +116,16 @@ const registerUser =async(req,res)=>{
         const newUser =new userModel(userData)
         const user=await newUser.save()
 
-        const token=jwt.sign({id:user._id},process.env.JWT_SECRET)
+        const { accessToken, refreshToken } = generateTokens({ id: user._id, role: 'user' })
 
-        res.json({success:true,token})
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'None',
+            maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+        })
+
+        res.json({success:true,token: accessToken})
     }
     catch(error)
     {
@@ -143,8 +151,16 @@ const loginUser=async (req,res) =>{
 
         if(isMatch)
         {
-            const token =jwt.sign({id:user._id},process.env.JWT_SECRET)
-            res.json({success:true,token})
+            const { accessToken, refreshToken } = generateTokens({ id: user._id, role: 'user' })
+
+            res.cookie('refreshToken', refreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'None',
+                maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+            })
+
+            res.json({success:true,token: accessToken})
         }
         else
         {
@@ -159,12 +175,58 @@ const loginUser=async (req,res) =>{
     }
 }
 
+const refreshTokenUser = async (req, res) => {
+    try {
+        const { refreshToken } = req.cookies;
+        if (!refreshToken) {
+            return res.json({ success: false, message: "No refresh token provided" });
+        }
+
+        const decoded = verifyRefreshToken(refreshToken);
+        if (!decoded || decoded.role !== 'user') {
+            return res.json({ success: false, message: "Invalid refresh token" });
+        }
+
+        const user = await userModel.findById(decoded.id);
+        if (!user) {
+            return res.json({ success: false, message: "User no longer exists" });
+        }
+
+        const { accessToken, refreshToken: newRefreshToken } = generateTokens({ id: user._id, role: 'user' });
+
+        res.cookie('refreshToken', newRefreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'None',
+            maxAge: 30 * 24 * 60 * 60 * 1000
+        });
+
+        res.json({ success: true, token: accessToken });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+}
+
+const logoutUser = async (req, res) => {
+    try {
+        res.clearCookie('refreshToken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'None',
+        });
+        res.json({ success: true, message: "Logged out successfully" });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+}
 
 const getProfile =async(req,res)=>{
     try{
 
         const {userId}=req.body
-        const userData=await userModel.findById(userId).select('-password')
+        const userData=await userModel.findById(userId).select('-password').lean()
         res.json({success:true,userData})
 
     }
@@ -229,7 +291,7 @@ const bookAppointment=async(req,res)=>{
             return res.json({success:false,message:"slotTime is required"})
         }
 
-        const docData=await doctorModel.findById(docId).select('-password')
+        const docData=await doctorModel.findById(docId)
 
         if(!docData.available)
         {
@@ -254,17 +316,34 @@ const bookAppointment=async(req,res)=>{
             slots_booked[slotDate].push(slotTime)
         }
 
+        docData.markModified('slots_booked')
+
         const userData =await userModel.findById(userId).select('-password')
-        delete docData.slots_booked
+        
+        const docDataCopy = docData.toObject()
+        delete docDataCopy.slots_booked
+        delete docDataCopy.password
 
         const appointmentData ={
-            userId,docId,userData,docData,amount:docData.fees,slotTime,slotDate,date:Date.now()
+            userId,docId,userData,docData: docDataCopy,amount:docData.fees,slotTime,slotDate,date:Date.now()
         }
 
         const newAppointment =new appointmentModel(appointmentData)
         await newAppointment.save()
-        await doctorModel.findByIdAndUpdate(docId,{slots_booked})
 
+        try {
+            await docData.save()
+        } catch (err) {
+            if (err.name === 'VersionError') {
+                await appointmentModel.findByIdAndDelete(newAppointment._id)
+                return res.json({success:false,message:"This slot was just booked by someone else. Please try again."})
+            }
+            await appointmentModel.findByIdAndDelete(newAppointment._id)
+            throw err
+        }
+
+        await cacheDel('doctors:approved:list')
+        await cacheDel('admin:dashboard')
         res.json({success:true,message:"Appointment booked"})
     }
     catch(error)
@@ -277,8 +356,7 @@ const bookAppointment=async(req,res)=>{
 const listAppointment=async (req,res)=>{
     try{
         const {userId}=req.body
-        await appointmentModel.autoCompleteAppointments()
-        const appointments =await appointmentModel.find({userId})
+        const appointments =await appointmentModel.find({userId}).lean()
         res.json({success:true,appointments})
     }
     catch(error)
@@ -316,6 +394,8 @@ const cancelAppointment =async (req,res)=>{
             console.log("Failed to send cancellation email:", emailError);
         }
 
+        await cacheDel('doctors:approved:list')
+        await cacheDel('admin:dashboard')
         res.json({success:true,message:"Appointment cancelled"})
     }
     catch(error)
@@ -360,5 +440,5 @@ const paymentRazorpay =async(req,res)=>{
 }
 
 
-export {registerUser,sendOtp,loginUser,paymentRazorpay,getProfile,updateProfile,bookAppointment,listAppointment,cancelAppointment}
+export {registerUser,sendOtp,loginUser,paymentRazorpay,getProfile,updateProfile,bookAppointment,listAppointment,cancelAppointment,refreshTokenUser,logoutUser}
 
