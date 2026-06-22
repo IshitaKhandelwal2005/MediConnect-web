@@ -102,7 +102,7 @@ export const deleteHealthRecord = async (req, res) => {
 export const getHealthRecords = async (req, res) => {
     try {
         const { userId } = req.body;
-        const user = await userModel.findById(userId).select('healthRecords');
+        const user = await userModel.findById(userId).select('healthRecords').lean();
         if (!user) {
             return res.json({ success: false, message: "User not found" });
         }
@@ -120,7 +120,7 @@ export const getPatientRecordsForDoctor = async (req, res) => {
         const { docId } = req.body;
         const { userId } = req.params;
 
-        const patient = await userModel.findById(userId).select('healthRecords');
+        const patient = await userModel.findById(userId).select('healthRecords').lean();
         if (!patient) {
             return res.json({ success: false, message: "Patient not found" });
         }
@@ -130,7 +130,7 @@ export const getPatientRecordsForDoctor = async (req, res) => {
             docId,
             userId,
             cancelled: false
-        });
+        }).lean();
 
         let hasAccess = false;
 

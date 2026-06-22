@@ -34,14 +34,18 @@ const loginAdmin = async (req, res) => {
 
 const allDoctors = async (req, res) => {
     try {
-        const cacheKey = 'admin:doctors:list';
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 0; // 0 means all
+        const skip = (page - 1) * limit;
+
+        const cacheKey = `admin:doctors:list:${page}:${limit}`;
         const cachedData = await cacheGet(cacheKey);
         if (cachedData) {
             console.log("Cache HIT (Admin) - Returning from Redis");
             return res.json({ success: true, doctors: cachedData });
         }
         console.log("Cache MISS (Admin) - Fetching from DB");
-        const doctors = await doctorModel.find({}).select('-password')
+        const doctors = await doctorModel.find({}).skip(skip).limit(limit).select('-password').lean();
         await cacheSet(cacheKey, doctors);
         res.json({ success: true, doctors })
     }
@@ -55,7 +59,11 @@ const allDoctors = async (req, res) => {
 const appointmentsAdmin = async (req, res) => {
 
     try {
-        const appointments = await appointmentModel.find({})
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 0;
+        const skip = (page - 1) * limit;
+
+        const appointments = await appointmentModel.find({}).skip(skip).limit(limit).lean();
         res.json({ success: true, appointments })
     }
     catch (error) {
@@ -100,15 +108,16 @@ const adminDashboard = async (req, res) => {
             return res.json({ success: true, dashData: cachedData });
         }
 
-        const doctors = await doctorModel.find({ isApproved: true })
-        const users = await userModel.find({})
-        const appointments = await appointmentModel.find({})
+        const doctors = await doctorModel.countDocuments({ isApproved: true })
+        const users = await userModel.countDocuments({})
+        const appointmentsCount = await appointmentModel.countDocuments({})
+        const latestAppointments = await appointmentModel.find({}).sort({ _id: -1 }).limit(5).lean();
 
         const dashData = {
-            doctors: doctors.length,
-            appointments: appointments.length,
-            patients: users.length,
-            latestAppointments: appointments.reverse().slice(0, 5)
+            doctors: doctors,
+            appointments: appointmentsCount,
+            patients: users,
+            latestAppointments: latestAppointments
         }
         await cacheSet(cacheKey, dashData, 300); // 5 minutes TTL
         res.json({ success: true, dashData })

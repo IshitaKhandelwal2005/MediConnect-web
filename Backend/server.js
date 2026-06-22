@@ -26,23 +26,13 @@ startReminderJob()
 app.use(express.json())
 app.use(cookieParser())
 
-const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174'];
+const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176'];
 app.use(cors({
-    origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) === -1) {
-            // For development, allow any localhost origin
-            if (origin.startsWith('http://localhost:')) {
-                return callback(null, true);
-            }
-            return callback(new Error('The CORS policy for this site does not allow access from the specified Origin.'), false);
-        }
-        return callback(null, true);
-    },
+    origin: allowedOrigins,
     credentials: true,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-})); // frontend //different domains can access api
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'token'],
+}));
 
 app.use(helmet());
 app.use(compression());
@@ -53,7 +43,7 @@ const limiter = rateLimit({
     standardHeaders: true, 
     legacyHeaders: false,
     store: new RedisStore({
-        sendCommand: (...args) => getRedisClient().sendCommand(args),
+        sendCommand: (...args) => getRedisClient().call(...args),
     }),
 });
 app.use('/api', limiter);

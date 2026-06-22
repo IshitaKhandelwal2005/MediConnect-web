@@ -61,14 +61,18 @@ const changeAvailability=async(req,res)=>{
 
 const doctorList =async(req,res)=>{
     try{
-        const cacheKey = 'doctors:approved:list';
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 0;
+        const skip = (page - 1) * limit;
+
+        const cacheKey = `doctors:approved:list:${page}:${limit}`;
         const cachedData = await cacheGet(cacheKey);
         if (cachedData) {
             console.log("Cache HIT - Returning from Redis");
             return res.json({ success: true, doctors: cachedData });
         }
         console.log("Cache MISS - Fetching from DB");
-        const doctors=await doctorModel.find({ isApproved: true }).select(['-password','-email']).lean()
+        const doctors=await doctorModel.find({ isApproved: true }).skip(skip).limit(limit).select(['-password','-email']).lean()
         await cacheSet(cacheKey, doctors);
         res.json({success:true,doctors})
     }
@@ -121,7 +125,11 @@ const loginDoctor =async(req,res)=>{
 const appointmentsDoctor =async(req,res)=>{
     try{
         const {docId}=req.body
-        const appointments=await appointmentModel.find({docId}).lean()
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 0;
+        const skip = (page - 1) * limit;
+
+        const appointments=await appointmentModel.find({docId}).skip(skip).limit(limit).lean()
 
         res.json({success:true,appointments})
     }

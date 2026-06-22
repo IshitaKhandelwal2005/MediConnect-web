@@ -356,7 +356,11 @@ const bookAppointment=async(req,res)=>{
 const listAppointment=async (req,res)=>{
     try{
         const {userId}=req.body
-        const appointments =await appointmentModel.find({userId}).lean()
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 0;
+        const skip = (page - 1) * limit;
+
+        const appointments =await appointmentModel.find({userId}).skip(skip).limit(limit).lean()
         res.json({success:true,appointments})
     }
     catch(error)
