@@ -6,7 +6,7 @@ import { toast } from 'react-toastify';
 
 const HealthRecords = () => {
     const { backendUrl } = useAppContext();
-  const { token } = useAuthContext();;
+    const { token } = useAuthContext();;
     const [activeTab, setActiveTab] = useState('uploads'); // 'uploads' or 'prescriptions'
     const [records, setRecords] = useState([]);
     const [appointments, setAppointments] = useState([]);
@@ -96,13 +96,11 @@ const HealthRecords = () => {
     };
 
     const handleFileSelect = (file) => {
-        // Enforce file type
         const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif'];
         if (!allowedTypes.includes(file.type)) {
             toast.warn('Only PDF and Image files (JPEG, PNG, GIF) are allowed.');
             return;
         }
-        // Enforce 10MB size limit
         if (file.size > 10 * 1024 * 1024) {
             toast.warn('File size cannot exceed 10MB.');
             return;
@@ -243,10 +241,10 @@ const HealthRecords = () => {
                                     onDrop={handleDrop}
                                     onClick={triggerFileSelect}
                                     className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${dragActive
-                                            ? 'border-[#002000] bg-[#002000]/5'
-                                            : selectedFile
-                                                ? 'border-emerald-500 bg-emerald-50/10'
-                                                : 'border-zinc-300 hover:border-[#002000] hover:bg-zinc-50'
+                                        ? 'border-[#002000] bg-[#002000]/5'
+                                        : selectedFile
+                                            ? 'border-emerald-500 bg-emerald-50/10'
+                                            : 'border-zinc-300 hover:border-[#002000] hover:bg-zinc-50'
                                         }`}
                                 >
                                     <input

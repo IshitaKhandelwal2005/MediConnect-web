@@ -5,7 +5,6 @@ import { generateTokens, verifyRefreshToken } from '../utils/jwt.js'
 import {v2 as cloudinary} from 'cloudinary'
 import doctorModel from '../models/doctorModel.js'
 import appointmentModel from '../models/appointmentModel.js'
-import Razorpay from 'razorpay'
 import otpModel from '../models/otpModel.js'
 import { sendOtpEmail, sendCancellationEmail } from '../utils/emailService.js'
 import { cacheDel } from '../config/redis.js'
@@ -409,40 +408,8 @@ const cancelAppointment =async (req,res)=>{
     }
 }
 
-const razorpayInstance = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
-
-const paymentRazorpay =async(req,res)=>{
-    try{
-
-        const {appointmentId}=req.body
-        const appointmentData=await appointmentModel.findById(appointmentId)
-
-        if(!appointmentData || appointmentData.cancelled)
-        {
-            return res.json({success:false,message:"Appointment cancelled or not found"})
-        }
-
-        const options ={
-            amount :appointmentData.amount *100,
-            currency :process.env.CURRENCY,
-            receipt:appointmentId,
-        }
-
-        const order= await razorpayInstance.orders.create(options)
-
-        res.json({success:true,order})
-    }
-    catch(error)
-    {
-        console.log(error)
-        res.json({success:false,message:error.message})
-    }
-
-}
 
 
-export {registerUser,sendOtp,loginUser,paymentRazorpay,getProfile,updateProfile,bookAppointment,listAppointment,cancelAppointment,refreshTokenUser,logoutUser}
+
+export {registerUser,sendOtp,loginUser,getProfile,updateProfile,bookAppointment,listAppointment,cancelAppointment,refreshTokenUser,logoutUser}
 

@@ -1,5 +1,5 @@
 import express from 'express'
-import { bookAppointment,paymentRazorpay, cancelAppointment,listAppointment,getProfile, loginUser, registerUser, updateProfile, sendOtp, refreshTokenUser, logoutUser } from '../controllers/userController.js'
+import { bookAppointment, cancelAppointment,listAppointment,getProfile, loginUser, registerUser, updateProfile, sendOtp, refreshTokenUser, logoutUser } from '../controllers/userController.js'
 import { addReview, getReviews } from '../controllers/reviewController.js'
 import { uploadHealthRecord, deleteHealthRecord, getHealthRecords } from '../controllers/ehrController.js'
 import authUser from '../middleware/authUser.js'
@@ -18,7 +18,6 @@ userRouter.post('/update-profile',upload.single('image'),authUser,updateProfile)
 userRouter.post('/book-appointment',authUser,bookAppointment)
 userRouter.get('/appointments',authUser,listAppointment)
 userRouter.post('/cancel-appointment',authUser,cancelAppointment)
-userRouter.post('/payment-razorpay',authUser,paymentRazorpay)
 userRouter.post('/add-review',authUser,addReview)
 userRouter.get('/reviews/:docId',getReviews)
 

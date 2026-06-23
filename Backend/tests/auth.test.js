@@ -1,18 +1,11 @@
 import { jest } from '@jest/globals';
 // Ensure env variables are set BEFORE dynamic imports
-process.env.RAZORPAY_KEY_ID = 'test_id';
-process.env.RAZORPAY_KEY_SECRET = 'test_secret';
 
 import { refreshTokenUser, logoutUser } from '../controllers/userController.js';
 import userModel from '../models/userModel.js';
 import { generateTokens } from '../utils/jwt.js';
 
 // Mock the dependencies
-jest.unstable_mockModule('razorpay', () => ({
-    default: class MockRazorpay {
-        constructor() {}
-    }
-}));
 
 jest.unstable_mockModule('../models/userModel.js', () => ({
     default: {
