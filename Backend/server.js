@@ -26,7 +26,20 @@ startReminderJob()
 app.use(express.json())
 app.use(cookieParser())
 
-const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175','https://medi-connect-web.vercel.app/',https://medi-connect-redic5msz-ishitas-projects-cdb5fa95.vercel.app'];
+const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:5175',
+    'https://medi-connect-web.vercel.app',
+    'https://medi-connect-redic5msz-ishitas-projects-cdb5fa95.vercel.app'
+];
+
+app.use(cors({
+    origin: allowedOrigins,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'token'],
+}));
 app.use(cors({
     origin: allowedOrigins,
     credentials: true,
