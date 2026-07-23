@@ -24,7 +24,7 @@ const DoctorContextProvider = ({ children }) => {
 
     const getDoctorAppointments = async () => {
         try {
-            const { data } = await axios.get(backendUrl + '/api/doctor/appointments', { headers: { dtoken } });
+            const { data } = await axios.get(backendUrl + '/api/doctor/appointments?page=1&limit=200', { headers: { dtoken } });
             if (data.success) {
                 setDoctorAppointments(data.appointments);
             } else {
@@ -98,7 +98,7 @@ const DoctorContextProvider = ({ children }) => {
         doctorAppointments, setDoctorAppointments, getDoctorAppointments,
         completeAppointment, cancelDoctorAppointment,
         doctorDashData, setDoctorDashData, getDoctorDashData
-    }), [profileData, doctorAppointments, doctorDashData]);
+    }), [profileData, doctorAppointments, doctorDashData, dtoken]);
 
     return (
         <DoctorContext.Provider value={value}>

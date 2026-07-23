@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import './App.css'
-import {Route,Routes} from 'react-router-dom'
+import {Route, Routes, Navigate} from 'react-router-dom'
 import Home from './pages/Home'
 import Doctors from './pages/Doctors'
 import Login from './pages/Login'
@@ -48,6 +48,8 @@ function App() {
                 <Route path='/doctor-dashboard' element={<DoctorDashboard/>} />
                 <Route path='/doctor-appointments' element={<DoctorAppointments/>} />
                 <Route path='/doctor-profile' element={<DoctorProfile/>} />
+                <Route path="/" element={<Navigate to={atoken ? "/admin-dashboard" : "/doctor-dashboard"} />} />
+                <Route path="*" element={<Navigate to={atoken ? "/admin-dashboard" : "/doctor-dashboard"} />} />
               </Routes>
             </div>
           </div>
@@ -70,6 +72,7 @@ function App() {
               <Route path='/appointments/:docId' element={<Appointments/>}></Route>
               <Route path='/payment-success' element={<PaymentSuccess/>}></Route>
               <Route path='/payment-cancel' element={<PaymentCancel/>}></Route>
+              <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </div>
           <Footer/>

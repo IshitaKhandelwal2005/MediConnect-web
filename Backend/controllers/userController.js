@@ -5,9 +5,9 @@ import { generateTokens, verifyRefreshToken } from '../utils/jwt.js'
 import {v2 as cloudinary} from 'cloudinary'
 import doctorModel from '../models/doctorModel.js'
 import appointmentModel from '../models/appointmentModel.js'
-import otpModel from '../models/otpModel.js'
 import { sendOtpEmail, sendCancellationEmail } from '../utils/emailService.js'
-import { cacheDel } from '../config/redis.js'
+import { cacheDel, cacheDeleteByPrefix, requestOtpThrottle, storeOtp, verifyOtp } from '../config/redis.js'
+import { parseSlotDateTime } from '../models/appointmentModel.js'
 
 // Send OTP for user registration
 const sendOtp = async (req, res) => {
@@ -23,15 +23,18 @@ const sendOtp = async (req, res) => {
             return res.json({ success: false, message: 'This email is already registered. Please log in.' })
         }
 
+        const throttleResult = await requestOtpThrottle(email, 'user')
+        if (!throttleResult.success) {
+            return res.json({ success: false, message: throttleResult.message })
+        }
+
         // Generate 6-digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString()
 
-        // Upsert OTP (replace any existing OTP for this email)
-        await otpModel.findOneAndUpdate(
-            { email },
-            { otp, createdAt: new Date() },
-            { upsert: true, new: true }
-        )
+        const otpStored = await storeOtp(email, otp, 'user')
+        if (!otpStored) {
+            return res.json({ success: false, message: 'OTP service unavailable' })
+        }
 
         // Send email
         const name = req.body.name || 'User'
@@ -95,15 +98,10 @@ const registerUser =async(req,res)=>{
         if (!otp) {
             return res.json({ success: false, message: 'OTP is required' })
         }
-        const otpRecord = await otpModel.findOne({ email })
-        if (!otpRecord) {
+        const otpIsValid = await verifyOtp(email, otp.toString(), 'user')
+        if (!otpIsValid) {
             return res.json({ success: false, message: 'OTP expired or not found. Please request a new one.' })
         }
-        if (otpRecord.otp !== otp.toString()) {
-            return res.json({ success: false, message: 'Invalid OTP. Please check and try again.' })
-        }
-        // Delete OTP after successful verification
-        await otpModel.deleteOne({ email })
 
         const salt=await bcrypt.genSalt(10)
         const hashedPassword =await bcrypt.hash(password,salt)
@@ -323,8 +321,13 @@ const bookAppointment=async(req,res)=>{
         delete docDataCopy.slots_booked
         delete docDataCopy.password
 
+        const appointmentDateTime = parseSlotDateTime(slotDate, slotTime)
+        if (!appointmentDateTime) {
+            return res.json({success:false,message:"Invalid slot date or time"})
+        }
+
         const appointmentData ={
-            userId,docId,userData,docData: docDataCopy,amount:docData.fees,slotTime,slotDate,date:Date.now()
+            userId,docId,userData,docData: docDataCopy,amount:docData.fees,slotTime,slotDate,date:Date.now(),appointmentDateTime
         }
 
         const newAppointment =new appointmentModel(appointmentData)
@@ -341,7 +344,7 @@ const bookAppointment=async(req,res)=>{
             throw err
         }
 
-        await cacheDel('doctors:approved:list')
+        await cacheDeleteByPrefix('doctors:approved:list')
         await cacheDel('admin:dashboard')
         res.json({success:true,message:"Appointment booked"})
     }
@@ -356,10 +359,10 @@ const listAppointment=async (req,res)=>{
     try{
         const {userId}=req.body
         const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 0;
+        const limit = Math.min(parseInt(req.query.limit) || 200, 200);
         const skip = (page - 1) * limit;
 
-        const appointments =await appointmentModel.find({userId}).skip(skip).limit(limit).lean()
+        const appointments =await appointmentModel.find({userId}).sort({ appointmentDateTime: -1, _id: -1 }).skip(skip).limit(limit).lean()
         res.json({success:true,appointments})
     }
     catch(error)
@@ -397,7 +400,7 @@ const cancelAppointment =async (req,res)=>{
             console.log("Failed to send cancellation email:", emailError);
         }
 
-        await cacheDel('doctors:approved:list')
+        await cacheDeleteByPrefix('doctors:approved:list')
         await cacheDel('admin:dashboard')
         res.json({success:true,message:"Appointment cancelled"})
     }

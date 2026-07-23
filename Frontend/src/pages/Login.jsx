@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { useAppContext } from '../context/AppContext';
-import { useAuthContext } from '../context/AuthContext';import axios from 'axios'
+import { useAuthContext } from '../context/AuthContext'; import axios from 'axios'
 import { toast } from 'react-toastify'
 import { useNavigate, useLocation } from 'react-router-dom'
 
@@ -48,9 +48,6 @@ const Login = () => {
       if (profession === 'Admin') {
         setEmail('admin@mediconnect.com')
         setPassword('qwerty123')
-      } else if (profession === 'Doctor') {
-        setEmail('doctor@mediconnect.com')
-        setPassword('doctor123')
       } else {
         setEmail('')
         setPassword('')
@@ -178,9 +175,9 @@ const Login = () => {
         const { data } = await axios.post(backendUrl + endpoint, { password, email })
         if (data.success) {
           localStorage.setItem(tokenKey, data.token)
-          if (profession === 'User') { setToken(data.token); setTimeout(() => navigate('/'), 100) }
-          else if (profession === 'Doctor') { setDToken(data.token); setTimeout(() => navigate('/doctor-dashboard'), 100) }
-          else if (profession === 'Admin') { setAToken(data.token); setTimeout(() => navigate('/admin-dashboard'), 100) }
+          if (profession === 'User') { navigate('/'); setToken(data.token); }
+          else if (profession === 'Doctor') { navigate('/doctor-dashboard'); setDToken(data.token); }
+          else if (profession === 'Admin') { navigate('/admin-dashboard'); setAToken(data.token); }
           toast.success('Login successful')
         } else {
           toast.error(data.message)
@@ -234,11 +231,10 @@ const Login = () => {
                 key={p}
                 type='button'
                 onClick={() => setProfession(p)}
-                className={`flex-1 py-2.5 rounded-lg font-semibold text-xs transition-all duration-200 ${
-                  profession === p
+                className={`flex-1 py-2.5 rounded-lg font-semibold text-xs transition-all duration-200 ${profession === p
                     ? 'bg-white text-neutral-800 shadow-sm border border-zinc-200/50'
                     : 'text-zinc-500 hover:text-neutral-800'
-                }`}
+                  }`}
               >
                 {p === 'User' ? 'Patient' : p}
               </button>
@@ -340,9 +336,8 @@ const Login = () => {
                 <label className='block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1'>Confirm Password</label>
                 <div className='relative'>
                   <input
-                    className={`border rounded-lg w-full p-3 pr-10 bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-neutral-800 focus:bg-white focus:border-transparent transition-all ${
-                      confirmPassword && confirmPassword !== password ? 'border-red-400' : 'border-zinc-300'
-                    }`}
+                    className={`border rounded-lg w-full p-3 pr-10 bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-neutral-800 focus:bg-white focus:border-transparent transition-all ${confirmPassword && confirmPassword !== password ? 'border-red-400' : 'border-zinc-300'
+                      }`}
                     type={showConfirmPw ? 'text' : 'password'} placeholder='••••••••'
                     onChange={(e) => setConfirmPassword(e.target.value)} value={confirmPassword} required
                   />

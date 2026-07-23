@@ -5,9 +5,8 @@ import appointmentModel from '../models/appointmentModel.js'
 import { generateTokens, verifyRefreshToken } from '../utils/jwt.js'
 import validator from 'validator'
 import {v2 as cloudinary} from 'cloudinary'
-import otpModel from '../models/otpModel.js'
 import { sendOtpEmail, sendCancellationEmail } from '../utils/emailService.js'
-import { cacheGet, cacheSet, cacheDel } from '../config/redis.js'
+import { cacheGet, cacheSet, cacheDel, cacheDeleteByPrefix, requestOtpThrottle, storeOtp, verifyOtp } from '../config/redis.js'
 
 // Send OTP for doctor registration
 const sendDoctorOtp = async (req, res) => {
@@ -23,15 +22,18 @@ const sendDoctorOtp = async (req, res) => {
             return res.json({ success: false, message: 'This email is already registered. Please log in.' })
         }
 
+        const throttleResult = await requestOtpThrottle(email, 'doctor')
+        if (!throttleResult.success) {
+            return res.json({ success: false, message: throttleResult.message })
+        }
+
         // Generate 6-digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString()
 
-        // Upsert OTP
-        await otpModel.findOneAndUpdate(
-            { email },
-            { otp, createdAt: new Date() },
-            { upsert: true, new: true }
-        )
+        const otpStored = await storeOtp(email, otp, 'doctor')
+        if (!otpStored) {
+            return res.json({ success: false, message: 'OTP service unavailable' })
+        }
 
         const name = req.body.name || 'Doctor'
         await sendOtpEmail(email, otp, name)
@@ -48,8 +50,8 @@ const changeAvailability=async(req,res)=>{
         console.log(docId)
         const docData=await doctorModel.findById(docId)
         await doctorModel.findByIdAndUpdate(docId,{available:!docData.available})
-        await cacheDel('doctors:approved:list')
-        await cacheDel('admin:doctors:list')
+        await cacheDeleteByPrefix('doctors:approved:list')
+        await cacheDeleteByPrefix('admin:doctors:list')
         res.json({success:true,message:'Availability changed'})
     }
     catch(error)
@@ -62,7 +64,7 @@ const changeAvailability=async(req,res)=>{
 const doctorList =async(req,res)=>{
     try{
         const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 0;
+        const limit = Math.min(parseInt(req.query.limit) || 200, 200);
         const skip = (page - 1) * limit;
 
         const cacheKey = `doctors:approved:list:${page}:${limit}`;
@@ -72,7 +74,7 @@ const doctorList =async(req,res)=>{
             return res.json({ success: true, doctors: cachedData });
         }
         console.log("Cache MISS - Fetching from DB");
-        const doctors=await doctorModel.find({ isApproved: true }).skip(skip).limit(limit).select(['-password','-email']).lean()
+        const doctors=await doctorModel.find({ isApproved: true }).sort({ _id: -1 }).skip(skip).limit(limit).select(['-password','-email']).lean()
         await cacheSet(cacheKey, doctors);
         res.json({success:true,doctors})
     }
@@ -126,10 +128,10 @@ const appointmentsDoctor =async(req,res)=>{
     try{
         const {docId}=req.body
         const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 0;
+        const limit = Math.min(parseInt(req.query.limit) || 200, 200);
         const skip = (page - 1) * limit;
 
-        const appointments=await appointmentModel.find({docId}).skip(skip).limit(limit).lean()
+        const appointments=await appointmentModel.find({docId}).sort({ appointmentDateTime: -1, _id: -1 }).skip(skip).limit(limit).lean()
 
         res.json({success:true,appointments})
     }
@@ -162,7 +164,7 @@ const appointmentComplete =async(req,res)=>{
                 isCompleted:true,
                 prescription: prescriptionUrl
             })
-            await cacheDel('doctors:approved:list')
+            await cacheDeleteByPrefix('doctors:approved:list')
             await cacheDel('admin:dashboard')
             return res.json({success:true,message:'APPOINTMENT COMPLETED'})
         }
@@ -199,7 +201,7 @@ const appointmentCancel =async(req,res)=>{
                 console.log("Failed to send cancellation email:", emailError);
             }
 
-            await cacheDel('doctors:approved:list')
+            await cacheDeleteByPrefix('doctors:approved:list')
             await cacheDel('admin:dashboard')
             return res.json({success:true,message:'APPOINTMENT CANCELLED'})
         }
@@ -218,7 +220,7 @@ const appointmentCancel =async(req,res)=>{
 const doctorDashboard =async(req,res)=>{
     try{
         const {docId}=req.body
-        const appointments=await appointmentModel.find({docId}).lean()
+        const appointments=await appointmentModel.find({docId}).sort({ appointmentDateTime: -1, _id: -1 }).lean()
         let earnings=0
 
         appointments.map((item)=>{
@@ -276,8 +278,8 @@ const updateDoctorProfile =async(req,res)=>{
         }
 
         await doctorModel.findByIdAndUpdate(docId,{fees: Number(fees),address,available})
-        await cacheDel('doctors:approved:list')
-        await cacheDel('admin:doctors:list')
+        await cacheDeleteByPrefix('doctors:approved:list')
+        await cacheDeleteByPrefix('admin:doctors:list')
         res.json({success:true,message:'Profile Updated'})
     }
     catch(error)
@@ -325,14 +327,10 @@ const registerDoctor = async (req, res) => {
         if (!otp) {
             return res.json({ success: false, message: 'OTP is required' })
         }
-        const otpRecord = await otpModel.findOne({ email })
-        if (!otpRecord) {
+        const otpIsValid = await verifyOtp(email, otp.toString(), 'doctor')
+        if (!otpIsValid) {
             return res.json({ success: false, message: 'OTP expired or not found. Please request a new one.' })
         }
-        if (otpRecord.otp !== otp.toString()) {
-            return res.json({ success: false, message: 'Invalid OTP. Please check and try again.' })
-        }
-        await otpModel.deleteOne({ email })
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
@@ -362,7 +360,7 @@ const registerDoctor = async (req, res) => {
         const newDoctor = new doctorModel(doctorData);
         await newDoctor.save();
 
-        await cacheDel('admin:doctors:list')
+        await cacheDeleteByPrefix('admin:doctors:list')
         await cacheDel('admin:dashboard')
         res.json({ success: true, message: "Doctor registration submitted. Pending admin approval." });
     } catch (error) {

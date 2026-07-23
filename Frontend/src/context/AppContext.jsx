@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useMemo } from "react";
 import axios from 'axios'
 import { toast } from 'react-toastify'
+import { useQuery } from '@tanstack/react-query';
 
 export const AppContext = createContext();
 
@@ -15,21 +16,20 @@ export const useAppContext = () => {
 const AppContextProvider = ({ children }) => {
     const currencySymbol = '₹'
     const backendUrl = import.meta.env.VITE_BACKEND_URL 
-    const [doctors, setDoctors] = useState([])
-
-    const getDoctorsData = async () => {
-        try {
-            const { data } = await axios.get(backendUrl + '/api/doctor/list')
+    const { data: doctors = [], refetch: getDoctorsData } = useQuery({
+        queryKey: ['doctors'],
+        queryFn: async () => {
+            const { data } = await axios.get(backendUrl + '/api/doctor/list?page=1&limit=200');
             if (data.success) {
-                setDoctors(data.doctors)
-            } else {
-                toast.error(data.message)
+                return data.doctors;
             }
-        } catch (error) {
-            console.log(error)
-            toast.error(error.message)
-        }
-    }
+            toast.error(data.message);
+            return [];
+        },
+        staleTime: 5 * 60 * 1000,
+    });
+
+    const setDoctors = () => {};
 
     const slotDateFormat = (dateString) => {
         if (!dateString) return '';
@@ -46,6 +46,7 @@ const AppContextProvider = ({ children }) => {
     }
 
     const calculateAge = (dob) => {
+        if (!dob) return 'N/A';
         const today = new Date()
         const birthDate = new Date(dob)
         let age = today.getFullYear() - birthDate.getFullYear()
@@ -56,9 +57,7 @@ const AppContextProvider = ({ children }) => {
         return age
     }
 
-    useEffect(() => {
-        getDoctorsData()
-    }, [])
+
 
     const value = useMemo(() => ({
         doctors, setDoctors, getDoctorsData,

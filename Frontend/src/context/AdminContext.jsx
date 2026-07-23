@@ -24,7 +24,7 @@ const AdminContextProvider = ({ children }) => {
 
     const getAllDoctors = async () => {
         try {
-            const { data } = await axios.post(backendUrl + '/api/admin/all-doctors', {}, { headers: { atoken } });
+            const { data } = await axios.post(backendUrl + '/api/admin/all-doctors?page=1&limit=200', {}, { headers: { atoken } });
             if (data.success) {
                 setAdminDoctors(data.doctors);
             } else {
@@ -65,7 +65,7 @@ const AdminContextProvider = ({ children }) => {
 
     const getAllAppointments = async () => {
         try {
-            const { data } = await axios.get(backendUrl + '/api/admin/appointments', { headers: { atoken } });
+            const { data } = await axios.get(backendUrl + '/api/admin/appointments?page=1&limit=200', { headers: { atoken } });
             if (data.success) {
                 setAppointments(data.appointments);
             } else {
@@ -109,7 +109,7 @@ const AdminContextProvider = ({ children }) => {
         changeAvailability, approveDoctor,
         appointments, setAppointments, getAllAppointments, cancelAppointment,
         dashData, setDashData, getDashData
-    }), [adminDoctors, appointments, dashData]);
+    }), [adminDoctors, appointments, dashData, atoken]);
 
     return (
         <AdminContext.Provider value={value}>

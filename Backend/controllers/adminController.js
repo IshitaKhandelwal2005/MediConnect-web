@@ -3,7 +3,7 @@ import doctorModel from "../models/doctorModel.js"
 import userModel from "../models/userModel.js"
 import appointmentModel from "../models/appointmentModel.js"
 import jwt from "jsonwebtoken"
-import { cacheGet, cacheSet, cacheDel } from '../config/redis.js'
+import { cacheGet, cacheSet, cacheDel, cacheDeleteByPrefix } from '../config/redis.js'
 import { generateTokens, verifyRefreshToken } from '../utils/jwt.js'
 
 const loginAdmin = async (req, res) => {
@@ -35,7 +35,7 @@ const loginAdmin = async (req, res) => {
 const allDoctors = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 0; // 0 means all
+        const limit = Math.min(parseInt(req.query.limit) || 200, 200);
         const skip = (page - 1) * limit;
 
         const cacheKey = `admin:doctors:list:${page}:${limit}`;
@@ -45,7 +45,7 @@ const allDoctors = async (req, res) => {
             return res.json({ success: true, doctors: cachedData });
         }
         console.log("Cache MISS (Admin) - Fetching from DB");
-        const doctors = await doctorModel.find({}).skip(skip).limit(limit).select('-password').lean();
+        const doctors = await doctorModel.find({}).sort({ _id: -1 }).skip(skip).limit(limit).select('-password').lean();
         await cacheSet(cacheKey, doctors);
         res.json({ success: true, doctors })
     }
@@ -60,10 +60,10 @@ const appointmentsAdmin = async (req, res) => {
 
     try {
         const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 0;
+        const limit = Math.min(parseInt(req.query.limit) || 200, 200);
         const skip = (page - 1) * limit;
 
-        const appointments = await appointmentModel.find({}).skip(skip).limit(limit).lean();
+        const appointments = await appointmentModel.find({}).sort({ appointmentDateTime: -1, _id: -1 }).skip(skip).limit(limit).lean();
         res.json({ success: true, appointments })
     }
     catch (error) {
@@ -90,8 +90,8 @@ const appointmentCancel = async (req, res) => {
         slots_booked[slotDate] = slots_booked[slotDate].filter(e => e != slotTime)
         await doctorModel.findByIdAndUpdate(docId, { slots_booked })
         
-        await cacheDel('doctors:approved:list')
-        await cacheDel('admin:dashboard')
+        await cacheDeleteByPrefix('doctors:approved:list');
+        await cacheDel('admin:dashboard');
         res.json({ success: true, message: "Appointment cancelled" })
     }
     catch (error) {
@@ -111,7 +111,7 @@ const adminDashboard = async (req, res) => {
         const doctors = await doctorModel.countDocuments({ isApproved: true })
         const users = await userModel.countDocuments({})
         const appointmentsCount = await appointmentModel.countDocuments({})
-        const latestAppointments = await appointmentModel.find({}).sort({ _id: -1 }).limit(5).lean();
+        const latestAppointments = await appointmentModel.find({}).sort({ appointmentDateTime: -1, _id: -1 }).limit(5).lean();
 
         const dashData = {
             doctors: doctors,
@@ -136,8 +136,8 @@ const approveDoctor = async (req, res) => {
             return res.json({ success: false, message: "Doctor not found" });
         }
         await doctorModel.findByIdAndUpdate(docId, { isApproved: true });
-        await cacheDel('admin:doctors:list');
-        await cacheDel('doctors:approved:list');
+        await cacheDeleteByPrefix('admin:doctors:list');
+        await cacheDeleteByPrefix('doctors:approved:list');
         await cacheDel('admin:dashboard');
         res.json({ success: true, message: "Doctor approved successfully" });
     } catch (error) {
