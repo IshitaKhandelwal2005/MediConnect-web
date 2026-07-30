@@ -12,7 +12,7 @@ describe('Booking System - bookAppointment', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         mockReq = {
-            body: { userId: 'user123', docId: 'doc123', slotDate: '20-10-2023', slotTime: '10:00 AM' }
+            body: { userId: 'user123', docId: 'doc123', slotDate: '20_10_2023', slotTime: '10:00 AM' }
         };
         mockRes = {
             json: jest.fn(),
@@ -26,11 +26,10 @@ describe('Booking System - bookAppointment', () => {
             slots_booked: {}, 
             available: true,
             fees: 100,
-            markModified: jest.fn(),
             toObject: jest.fn().mockReturnValue({ _id: 'doc123', fees: 100 }),
-            save: jest.fn().mockResolvedValue(true)
         };
         doctorModel.findById = jest.fn().mockResolvedValue(mockDoctorData);
+        doctorModel.findByIdAndUpdate = jest.fn().mockResolvedValue(true);
         
         const mockUserData = { _id: 'user123' };
         userModel.findById = jest.fn().mockReturnValue({ select: jest.fn().mockResolvedValue(mockUserData) });
@@ -41,7 +40,7 @@ describe('Booking System - bookAppointment', () => {
         await bookAppointment(mockReq, mockRes);
 
         expect(mockRes.json).toHaveBeenCalledWith({ success: true, message: 'Appointment booked' });
-        expect(mockDoctorData.save).toHaveBeenCalled();
+        expect(doctorModel.findByIdAndUpdate).toHaveBeenCalled();
     });
 
     it('should fail if doctor is not available', async () => {
@@ -51,5 +50,29 @@ describe('Booking System - bookAppointment', () => {
         await bookAppointment(mockReq, mockRes);
 
         expect(mockRes.json).toHaveBeenCalledWith({ success: false, message: 'doctor not available' });
+    });
+
+    it('should reject a duplicate appointment slot', async () => {
+        const mockDoctorData = {
+            _id: 'doc123',
+            slots_booked: {},
+            available: true,
+            fees: 100,
+            toObject: jest.fn().mockReturnValue({ _id: 'doc123', fees: 100 })
+        };
+        doctorModel.findById = jest.fn().mockResolvedValue(mockDoctorData);
+        doctorModel.findByIdAndUpdate = jest.fn().mockResolvedValue(true);
+
+        const mockUserData = { _id: 'user123' };
+        userModel.findById = jest.fn().mockReturnValue({ select: jest.fn().mockResolvedValue(mockUserData) });
+
+        const duplicateError = new Error('duplicate key error');
+        duplicateError.code = 11000;
+        appointmentModel.prototype.save = jest.fn().mockRejectedValue(duplicateError);
+
+        await bookAppointment(mockReq, mockRes);
+
+        expect(mockRes.json).toHaveBeenCalledWith({ success: false, message: 'slot not available' });
+        expect(doctorModel.findByIdAndUpdate).not.toHaveBeenCalled();
     });
 });

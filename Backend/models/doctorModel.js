@@ -16,7 +16,7 @@ const doctorSchema=new mongoose.Schema({
     slots_booked :{type:Object,default:{}},
     isApproved :{type:Boolean,default:false,index:true},
     document :{type:String,default:""},
-},{minimize:false, optimisticConcurrency: true})
+},{minimize:false})
 const doctorModel =
   mongoose.models?.Doctor || mongoose.model("Doctor", doctorSchema);
 

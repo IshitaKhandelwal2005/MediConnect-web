@@ -38,6 +38,11 @@ const appointmentSchema = new mongoose.Schema({
     reminder1hSent: { type: Boolean, default: false }
 })
 
+appointmentSchema.index(
+    { docId: 1, slotDate: 1, slotTime: 1 },
+    { unique: true, partialFilterExpression: { cancelled: false } }
+)
+
 appointmentSchema.index({ cancelled: 1, isCompleted: 1 });
 
 appointmentSchema.statics.autoCompleteAppointments = async function () {

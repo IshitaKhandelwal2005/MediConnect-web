@@ -290,41 +290,22 @@ const bookAppointment=async(req,res)=>{
 
         const docData=await doctorModel.findById(docId)
 
-        if(!docData.available)
+        if(!docData || !docData.available)
         {
             return res.json({success:false,message:"doctor not available"})
 
         }
-        let slots_booked=docData.slots_booked
 
-        if(slots_booked[slotDate])
-        {
-            if(slots_booked[slotDate].includes(slotTime)){
-                return res.json({success:false,message:"slot not available"})
-            }
-            else
-            {
-                slots_booked[slotDate].push(slotTime)
-            }
+        const appointmentDateTime = parseSlotDateTime(slotDate, slotTime)
+        if (!appointmentDateTime) {
+            return res.json({success:false,message:"Invalid slot date or time"})
         }
-        else
-        {
-            slots_booked[slotDate]=[]
-            slots_booked[slotDate].push(slotTime)
-        }
-
-        docData.markModified('slots_booked')
 
         const userData =await userModel.findById(userId).select('-password')
         
         const docDataCopy = docData.toObject()
         delete docDataCopy.slots_booked
         delete docDataCopy.password
-
-        const appointmentDateTime = parseSlotDateTime(slotDate, slotTime)
-        if (!appointmentDateTime) {
-            return res.json({success:false,message:"Invalid slot date or time"})
-        }
 
         const appointmentData ={
             userId,docId,userData,docData: docDataCopy,amount:docData.fees,slotTime,slotDate,date:Date.now(),appointmentDateTime
@@ -334,12 +315,12 @@ const bookAppointment=async(req,res)=>{
         await newAppointment.save()
 
         try {
-            await docData.save()
+            await doctorModel.findByIdAndUpdate(docId, {
+                $addToSet: {
+                    [`slots_booked.${slotDate}`]: slotTime
+                }
+            })
         } catch (err) {
-            if (err.name === 'VersionError') {
-                await appointmentModel.findByIdAndDelete(newAppointment._id)
-                return res.json({success:false,message:"This slot was just booked by someone else. Please try again."})
-            }
             await appointmentModel.findByIdAndDelete(newAppointment._id)
             throw err
         }
@@ -351,6 +332,9 @@ const bookAppointment=async(req,res)=>{
     catch(error)
     {
         console.log(error)
+        if (error?.code === 11000) {
+            return res.json({success:false,message:"slot not available"})
+        }
         res.json({success:false,message:error.message})
     }
 }
@@ -387,15 +371,14 @@ const cancelAppointment =async (req,res)=>{
         await appointmentModel.findByIdAndUpdate(appointmentId,{cancelled:true})
 
         const {docId,slotDate,slotTime}=appointmentData
-       const doctorData=await doctorModel.findById(docId)
-
-       let slots_booked =doctorData.slots_booked
-
-       slots_booked[slotDate]=slots_booked[slotDate].filter(e =>e!=slotTime)
-        await doctorModel.findByIdAndUpdate(docId,{slots_booked})
+        await doctorModel.findByIdAndUpdate(docId, {
+            $pull: {
+                [`slots_booked.${slotDate}`]: slotTime
+            }
+        })
         
         try {
-            await sendCancellationEmail(appointmentData.userData.email, appointmentData.userData.name, doctorData.name, slotDate, slotTime);
+            await sendCancellationEmail(appointmentData.userData.email, appointmentData.userData.name, appointmentData.docData.name, slotDate, slotTime);
         } catch (emailError) {
             console.log("Failed to send cancellation email:", emailError);
         }

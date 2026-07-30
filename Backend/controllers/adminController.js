@@ -83,12 +83,11 @@ const appointmentCancel = async (req, res) => {
         await appointmentModel.findByIdAndUpdate(appointmentId, { cancelled: true })
 
         const { docId, slotDate, slotTime } = appointmentData
-        const doctorData = await doctorModel.findById(docId)
-
-        let slots_booked = doctorData.slots_booked
-
-        slots_booked[slotDate] = slots_booked[slotDate].filter(e => e != slotTime)
-        await doctorModel.findByIdAndUpdate(docId, { slots_booked })
+        await doctorModel.findByIdAndUpdate(docId, {
+            $pull: {
+                [`slots_booked.${slotDate}`]: slotTime
+            }
+        })
         
         await cacheDeleteByPrefix('doctors:approved:list');
         await cacheDel('admin:dashboard');
