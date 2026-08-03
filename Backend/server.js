@@ -19,6 +19,9 @@ import { startReminderJob } from './jobs/appointmentReminders.js'
 const app = express() // routes,middleware
 const port = process.env.PORT || 4000
 
+// Trust reverse proxies (e.g., Render/Cloudflare) so req.ip and rate limiting work correctly.
+app.set('trust proxy', 1)
+
 connectDB()
 connectCloudinary()
 connectRedis()
