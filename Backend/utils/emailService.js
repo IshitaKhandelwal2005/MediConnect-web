@@ -11,19 +11,19 @@ const createTransporter = () => {
     throw new Error('Email service is not configured')
   }
 
-    return nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false,
-        requireTLS: true,
-        connectionTimeout: 100000,
-        greetingTimeout: 100000,
-        socketTimeout: 100000,
-        auth: {
+  return nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    requireTLS: true,
+    tls: {
+      rejectUnauthorized: false,
+    },
+    auth: {
       user: emailUser,
-      pass: emailPass
-        }
-    });
+      pass: emailPass,
+    },
+  });
 };
 
 export const verifyEmailTransport = async () => {
