@@ -40,7 +40,16 @@ const sendMailWithTimeout = async (transporter, mailOptions, timeoutMs = 10000) 
 
   try {
     return await Promise.race([
-      transporter.sendMail(mailOptions),
+      new Promise((resolve, reject) => {
+        transporter.sendMail(mailOptions, (err, info) => {
+          if (err) {
+            console.error(err);
+            reject(err);
+          } else {
+            resolve(info);
+          }
+        });
+      }),
       timeoutPromise,
     ]);
   } finally {
