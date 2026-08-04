@@ -15,6 +15,7 @@ import doctorRouter from './routes/doctorRoute.js'
 import userRouter from './routes/userRoute.js'
 import paymentRouter from './routes/paymentRoute.js'
 import { startReminderJob } from './jobs/appointmentReminders.js'
+import { verifyEmailTransport } from './utils/emailService.js'
 
 const app = express() // routes,middleware
 const port = process.env.PORT || 4000
@@ -26,11 +27,15 @@ connectDB()
 connectCloudinary()
 connectRedis()
 startReminderJob()
+
+verifyEmailTransport()
+    .then(() => console.log('Email transport verified'))
+    .catch((error) => console.log('Email transport verification failed:', error.message))
+
 app.use(express.json())
 app.use(cookieParser())
 
 const allowedOrigins = [
-    '*',
     'http://localhost:5173',
     'http://localhost:5174',
     'http://localhost:5175',

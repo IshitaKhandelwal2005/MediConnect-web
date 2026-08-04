@@ -1,20 +1,59 @@
 import nodemailer from 'nodemailer';
 
+const normalizeEmailUser = (value) => String(value || '').trim();
+const normalizeEmailPass = (value) => String(value || '').replace(/\s+/g, '');
+
 const createTransporter = () => {
+  const emailUser = normalizeEmailUser(process.env.EMAIL_USER);
+  const emailPass = normalizeEmailPass(process.env.EMAIL_PASS);
+
+  if (!emailUser || !emailPass) {
+    throw new Error('Email service is not configured')
+  }
+
     return nodemailer.createTransport({
-        service: 'gmail',
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
+        requireTLS: true,
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 10000,
         auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
+      user: emailUser,
+      pass: emailPass
         }
     });
 };
 
+export const verifyEmailTransport = async () => {
+  const transporter = createTransporter();
+  await transporter.verify();
+  return true;
+};
+
+const sendMailWithTimeout = async (transporter, mailOptions, timeoutMs = 10000) => {
+  let timeoutId;
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error('Email send timed out')), timeoutMs);
+  });
+
+  try {
+    return await Promise.race([
+      transporter.sendMail(mailOptions),
+      timeoutPromise,
+    ]);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+};
+
 export const sendOtpEmail = async (email, otp, recipientName = 'User') => {
     const transporter = createTransporter();
+    const fromAddress = normalizeEmailUser(process.env.EMAIL_USER);
 
     const mailOptions = {
-        from: `"MediConnect" <${process.env.EMAIL_USER}>`,
+      from: `"MediConnect" <${fromAddress}>`,
         to: email,
         subject: 'Your MediConnect Verification Code',
         html: `
@@ -74,15 +113,16 @@ export const sendOtpEmail = async (email, otp, recipientName = 'User') => {
         `
     };
 
-    await transporter.sendMail(mailOptions);
+    await sendMailWithTimeout(transporter, mailOptions);
 };
 
 export const sendReminderEmail = async (email, patientName, doctorName, date, time, reminderType) => {
     const transporter = createTransporter();
     const timeText = reminderType === '24h' ? 'tomorrow' : 'in 1 hour';
+  const fromAddress = normalizeEmailUser(process.env.EMAIL_USER);
 
     const mailOptions = {
-        from: `"MediConnect" <${process.env.EMAIL_USER}>`,
+    from: `"MediConnect" <${fromAddress}>`,
         to: email,
         subject: `Appointment Reminder: You have an appointment ${timeText}`,
         html: `
@@ -102,14 +142,15 @@ export const sendReminderEmail = async (email, patientName, doctorName, date, ti
         </html>
         `
     };
-    await transporter.sendMail(mailOptions);
+    await sendMailWithTimeout(transporter, mailOptions);
 };
 
 export const sendCancellationEmail = async (email, patientName, doctorName, date, time) => {
     const transporter = createTransporter();
+  const fromAddress = normalizeEmailUser(process.env.EMAIL_USER);
     
     const mailOptions = {
-        from: `"MediConnect" <${process.env.EMAIL_USER}>`,
+    from: `"MediConnect" <${fromAddress}>`,
         to: email,
         subject: `Appointment Cancelled`,
         html: `
@@ -128,5 +169,5 @@ export const sendCancellationEmail = async (email, patientName, doctorName, date
         </html>
         `
     };
-    await transporter.sendMail(mailOptions);
+    await sendMailWithTimeout(transporter, mailOptions);
 };
