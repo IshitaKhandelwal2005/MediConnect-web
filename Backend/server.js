@@ -40,17 +40,39 @@ const allowedOrigins = [
     'http://localhost:5174',
     'http://localhost:5175',
     'https://medi-connect-web.vercel.app',
+    // 'https://medi-connect-web-wine.vercel.app',
     'https://medi-connect-redic5msz-ishitas-projects-cdb5fa95.vercel.app'
 ];
 
 app.use(cors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps, curl, postman)
+        if (!origin) return callback(null, true);
+
+        const cleanOrigin = origin.replace(/\/$/, '');
+
+        // If origin matches allowed list, ends with .vercel.app, or onrender.com
+        if (
+            allowedOrigins.includes(cleanOrigin) ||
+            cleanOrigin.endsWith('.vercel.app') ||
+            cleanOrigin.includes('onrender.com') ||
+            process.env.NODE_ENV !== 'production'
+        ) {
+            return callback(null, origin);
+        }
+
+        // Reflect origin dynamically to satisfy credentials: true requirement
+        return callback(null, origin);
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'token', 'atoken', 'dtoken'],
+    optionsSuccessStatus: 200
 }));
 
-app.use(helmet());
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(compression());
 
 const limiter = rateLimit({
@@ -64,12 +86,10 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
-
 app.use('/api/admin', adminRouter)
 app.use('/api/doctor', doctorRouter)
 app.use('/api/user', userRouter)
 app.use('/api/payment', paymentRouter)
-
 
 app.get('/', (req, res) => {
     res.send('API working')
