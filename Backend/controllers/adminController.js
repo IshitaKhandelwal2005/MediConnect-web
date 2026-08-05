@@ -145,6 +145,28 @@ const approveDoctor = async (req, res) => {
     }
 }
 
+const disapproveDoctor = async (req, res) => {
+    try {
+        const { docId } = req.body;
+        const doctor = await doctorModel.findById(docId);
+        if (!doctor) {
+            return res.json({ success: false, message: "Doctor not found" });
+        }
+
+        // remove the doctor request completely
+        await doctorModel.findByIdAndDelete(docId);
+
+        await cacheDeleteByPrefix('admin:doctors:list');
+        await cacheDeleteByPrefix('doctors:approved:list');
+        await cacheDel('admin:dashboard');
+
+        res.json({ success: true, message: "Doctor request disapproved and removed" });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+}
+
 const refreshTokenAdmin = async (req, res) => {
     try {
         const { refreshToken } = req.cookies;
@@ -187,6 +209,6 @@ const logoutAdmin = async (req, res) => {
     }
 }
 
-export { loginAdmin, allDoctors, adminDashboard, appointmentCancel, appointmentsAdmin, approveDoctor, refreshTokenAdmin, logoutAdmin }
+export { loginAdmin, allDoctors, adminDashboard, appointmentCancel, appointmentsAdmin, approveDoctor, disapproveDoctor, refreshTokenAdmin, logoutAdmin }
 
 

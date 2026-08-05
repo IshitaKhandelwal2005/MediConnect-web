@@ -63,6 +63,20 @@ const AdminContextProvider = ({ children }) => {
         }
     };
 
+    const disapproveDoctor = async (docId) => {
+        try {
+            const { data } = await axios.post(backendUrl + '/api/admin/disapprove-doctor', { docId }, { headers: { atoken } });
+            if (data.success) {
+                toast.success(data.message);
+                getAllDoctors();
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.message);
+        }
+    };
+
     const getAllAppointments = async () => {
         try {
             const { data } = await axios.get(backendUrl + '/api/admin/appointments?page=1&limit=200', { headers: { atoken } });
@@ -106,7 +120,7 @@ const AdminContextProvider = ({ children }) => {
 
     const value = useMemo(() => ({
         adminDoctors, setAdminDoctors, getAllDoctors,
-        changeAvailability, approveDoctor,
+        changeAvailability, approveDoctor, disapproveDoctor,
         appointments, setAppointments, getAllAppointments, cancelAppointment,
         dashData, setDashData, getDashData
     }), [adminDoctors, appointments, dashData, atoken]);

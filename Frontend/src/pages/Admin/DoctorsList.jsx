@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from 'react'
 import { useAuthContext } from '../../context/AuthContext';
 import { useAdminContext } from '../../context/AdminContext';function DoctorsList() {
   const { atoken } = useAuthContext();
-  const { adminDoctors, getAllDoctors, changeAvailability, approveDoctor } = useAdminContext();
+  const { adminDoctors, getAllDoctors, changeAvailability, approveDoctor, disapproveDoctor } = useAdminContext();
   const [activeTab, setActiveTab] = useState('active') // 'active' or 'pending'
 
   useEffect(() => {
@@ -144,6 +144,16 @@ import { useAdminContext } from '../../context/AdminContext';function DoctorsLis
                     className='flex-1 text-center bg-[#002000] hover:bg-emerald-800 text-white font-medium py-2.5 px-6 rounded-full text-xs transition-all shadow-md'
                   >
                     Approve Doctor
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Disapprove and remove this doctor request?')) {
+                        disapproveDoctor(item._id)
+                      }
+                    }}
+                    className='flex-1 text-center bg-white hover:bg-zinc-100 text-red-600 border border-zinc-200 font-medium py-2.5 px-6 rounded-full text-xs transition-all shadow-sm'
+                  >
+                    Disapprove
                   </button>
                 </div>
               </div>
